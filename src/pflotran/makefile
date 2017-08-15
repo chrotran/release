@@ -215,7 +215,7 @@ FPPFLAGS = ${MYFLAGS}
 # FC_FLAGS is defined in ${PETSC_DIR}/${PETSC_ARCH}/lib/petsc/conf/petscvariables
 
 # List of files to remove when running "make clean-pflotran"
-CLEANFILES       = pflotran pflotran_rxn libpflotranchem.a make.log $(SRC_DIR)/pflotran_provenance.F90
+CLEANFILES       = chrotran pflotran_rxn libpflotranchem.a make.log $(SRC_DIR)/pflotran_provenance.F90
 
 ###############################################################################
 # Lists all files that PFLOTRAN (and other targets) depends on 
@@ -346,6 +346,7 @@ chem_obj = \
 	${common_src}reaction_sandbox_pnnl_cyber.o \
 	${common_src}reaction_sandbox_simple.o \
 	${common_src}reaction_sandbox_ufd_wp.o \
+	${common_src}reaction_sandbox_chrotran.o \
 	${common_src}reaction_solid_solution.o \
 	${common_src}reaction_solid_solution_aux.o \
 	${common_src}reaction_surf_complex.o \
@@ -537,8 +538,8 @@ pflotran_obj = $(util_obj) $(eos_obj) $(mode_aux_obj) $(mode_obj) \
 pflotran_rxn_obj = ${pflotran_src}pflotran_rxn.o
 
 # PFLOTRAN executable
-pflotran : $(pflotran_obj)
-	${FLINKER} -o pflotran $(pflotran_obj) ${PETSC_LIB} ${LIBS} 
+chrotran : $(pflotran_obj)
+	${FLINKER} -o chrotran $(pflotran_obj) ${PETSC_LIB} ${LIBS} 
 
 # PFLOTRAN as a library
 libpflotran.a : $(pflotran_obj)
@@ -1246,6 +1247,7 @@ reaction_sandbox.o : global_aux.o input_aux.o material_aux.o option.o \
                      reaction_sandbox_base.o reaction_sandbox_clm_cn.o \
                      reaction_sandbox_example.o reaction_sandbox_pnnl_cyber.o \
                      reaction_sandbox_simple.o reaction_sandbox_ufd_wp.o \
+                     reaction_sandbox_chrotran.o \
                      reactive_transport_aux.o string.o utility.o
 reaction_sandbox_base.o : global_aux.o input_aux.o material_aux.o option.o \
                           output_aux.o pflotran_constants.o reaction_aux.o \
@@ -1270,6 +1272,10 @@ reaction_sandbox_simple.o : global_aux.o material_aux.o option.o \
                             reaction_immobile_aux.o reaction_sandbox_base.o \
                             reactive_transport_aux.o
 reaction_sandbox_ufd_wp.o : global_aux.o input_aux.o material_aux.o option.o \
+                            pflotran_constants.o reaction_aux.o \
+                            reaction_immobile_aux.o reaction_sandbox_base.o \
+                            reactive_transport_aux.o string.o units.o
+reaction_sandbox_chrotran.o : global_aux.o input_aux.o material_aux.o option.o \
                             pflotran_constants.o reaction_aux.o \
                             reaction_immobile_aux.o reaction_sandbox_base.o \
                             reactive_transport_aux.o string.o units.o

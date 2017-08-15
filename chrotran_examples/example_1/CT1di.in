@@ -1,0 +1,394 @@
+# Id: CT1di.in, Fri 28 Oct 2016 10:45:29 AM MDT #
+# Created by Hansen,Karra,Pandey LANL
+# Description: YES direct reaction YES inhibitor (i.e., alcohol)
+#------------------------------------------------------------------
+
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_FLOW flow
+      MODE RICHARDS
+    /
+    SUBSURFACE_TRANSPORT transport
+      GLOBAL_IMPLICIT
+      NUMERICAL_JACOBIAN
+    /
+  /
+END
+
+SUBSURFACE
+
+#=========================== chemistry ========================================
+CHEMISTRY
+  PRIMARY_SPECIES
+    molasses
+    Cr(VI)
+    ethanol
+    biocide
+  END
+  IMMOBILE_SPECIES
+    biomass
+    molasses_im
+  END
+  MINERALS
+    chubbite        # dummy mineral volume fraction = 0.85, porosity = 0.15
+  END
+  REACTION_SANDBOX
+    CHROTRAN_PARAMETERS
+       NAME_D_MOBILE        molasses
+       NAME_D_IMMOBILE      molasses_im
+       NAME_C               Cr(VI)
+       NAME_B               biomass
+       NAME_I               ethanol
+       NAME_X               biocide
+       NAME_BIOMINERAL      chubbite
+
+       EXPONENT_B           1.0         # alpha [-]
+       
+       BACKGROUND_CONC_B    1.e-10      # B_min [mol/m^3]
+
+       MASS_ACTION_B        0.d0        # Gamma_B [L/mol/s]
+       MASS_ACTION_CD       1.0         # Gamma_CD [L/mol/s]
+       MASS_ACTION_X        0.d0        # Gamma_X [L/mol/s]
+
+       RATE_B_1             1.d-5       # lambda_B1 [/s]
+       RATE_B_2             1.d-6       # lambda_B2 [/s]  
+       RATE_C               1.d-10      # lambda_C [/s]       
+       RATE_D               0.d0        # lambda_D [/s]
+       RATE_D_IMMOB         150.d-2     # lambda_D_i [/s]
+       RATE_D_MOBIL         1.d-2       # lambda_D_m [/s]
+       
+       INHIBITION_B         5.d1        # K_B [mol/L_bulk]       
+       INHIBITION_C         1.d-7       # K_C [M]
+       MONOD_D              1.d-6       # K_F [M]
+       INHIBITION_I         1.d-4       # K_A [M]
+       
+       DENSITY_B            1.d20       # [g/L = M]
+       
+       STOICHIOMETRIC_C     0.33d0      # S_C [-]
+       STOICHIOMETRIC_D_1   1.d0        # S_D_1 [-]
+       STOICHIOMETRIC_D_2   0.020833d0  # S_D_2 [-]       
+    END
+  END
+  MINERAL_KINETICS
+    chubbite 
+        RATE_CONSTANT 0.d0
+    END
+  END
+  UPDATE_POROSITY
+  MINIMUM_POROSITY 1.d-4
+  UPDATE_PERMEABILITY
+  UPDATE_MINERAL_SURFACE_AREA
+  DATABASE ../chem.dat
+  OUTPUT
+    ALL
+    FREE_ION
+    TOTAL
+  /
+  LOG_FORMULATION
+END
+
+#=========================== solver options ===================================
+TIMESTEPPER FLOW
+  TS_ACCELERATION 8
+END
+
+NEWTON_SOLVER FLOW
+END
+
+LINEAR_SOLVER FLOW
+#  KSP_TYPE PREONLY
+#  PC_TYPE LU
+END
+
+NEWTON_SOLVER TRANSPORT
+  STOL 1.d-30
+  ITOL 1.d-8
+  RTOL 1.d-8
+  MAXIT 25
+END
+
+LINEAR_SOLVER TRANSPORT
+#  KSP_TYPE PREONLY
+#  PC_TYPE LU
+END
+
+#=========================== discretization ===================================
+GRID
+  TYPE structured
+  NXYZ 100 100 1
+  BOUNDS
+    0.d0 0.d0 0.d0
+    100.d0 100.d0 30.d0
+  /
+END
+
+#============================= dataset =================================
+DATASET Permeability
+  FILENAME ../k_field100--s2--g1e-4.h5
+END
+
+#=========================== fluid properties =================================
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.d-9
+END
+
+#=========================== solver options ===================================
+TIMESTEPPER FLOW
+#  INITIALIZE_TO_STEADY_STATE
+END
+
+#=========================== material properties ==============================
+MATERIAL_PROPERTY soil1
+  ID 1
+  POROSITY 0.15d0
+  TORTUOSITY 0.1d0
+  PERMEABILITY
+    DATASET Permeability
+  /
+  PERMEABILITY_MIN_SCALE_FACTOR 1.d-4
+  CHARACTERISTIC_CURVES cc1
+END
+
+#=========================== characteristic curves ============================
+CHARACTERISTIC_CURVES cc1
+  SATURATION_FUNCTION VAN_GENUCHTEN
+    ALPHA  1.d-4
+    M 0.5d0
+    LIQUID_RESIDUAL_SATURATION 0.1d0
+  /
+  PERMEABILITY_FUNCTION MUALEM_VG_LIQ
+    M 0.5d0
+    LIQUID_RESIDUAL_SATURATION 0.1d0
+  /
+END
+
+#=========================== output options ===================================
+OUTPUT
+  PERIODIC TIME 5.d0 d
+  FORMAT HDF5
+  PRINT_COLUMN_IDS
+  VELOCITY_AT_CENTER
+  VARIABLES
+    LIQUID_HEAD
+    LIQUID_PRESSURE
+    LIQUID_SATURATION
+    PERMEABILITY
+    POROSITY
+  /
+END
+
+#=========================== times ============================================
+TIME
+  FINAL_TIME 500.d0 d
+  INITIAL_TIMESTEP_SIZE 1.d-10 d
+  MAXIMUM_TIMESTEP_SIZE 5.d0 d at 0.0 d
+  MAXIMUM_TIMESTEP_SIZE 1.d-2 d at 10.0 d
+  MAXIMUM_TIMESTEP_SIZE 5.d0 d at 12.0 d
+END
+
+#=========================== regions ==========================================
+REGION all
+  COORDINATES
+    0.d0 0.d0 0.d0
+    100.d0 100.d0 30.d0
+  /
+END
+
+REGION west
+  FACE WEST
+  COORDINATES
+    0.d0 0.d0 0.d0
+    0.d0 100.d0 30.d0
+  /
+END
+
+REGION east
+  FACE EAST
+  COORDINATES
+    100.d0 0.d0 0.d0
+    100.d0 100.d0 30.d0
+  /
+END
+
+REGION north
+  FACE NORTH
+  COORDINATES
+    0.d0 100.d0 0.d0
+    100.d0 100.d0 30.d0
+  /
+END
+
+REGION south
+  FACE SOUTH
+  COORDINATES
+    0.d0 0.d0 0.d0
+    100.d0 0.d0 30.d0
+  /
+END
+
+REGION well_injection
+  COORDINATES
+    25.d0 50.d0 0.d0
+    25.d0 50.d0 30.d0
+  /
+END
+
+REGION obs1
+  COORDINATES
+    70.d0 50.d0 0.d0
+    70.d0 50.d0 30.d0
+  /
+END
+
+REGION obs2
+  COORDINATES
+    30.d0 50.d0 0.d0
+    30.d0 50.d0 30.d0
+  /
+END
+
+#=========================== flow conditions ==================================
+# 101325 Pa = 1 atm = 10.35091 m H2O
+# 1000m = 9788998.03 Pa
+# 999.72m = 9786257.1105516 Pa
+# 0.28m = 2740.9194484000004
+
+FLOW_CONDITION initial
+  TYPE
+    PRESSURE dirichlet
+  /
+  PRESSURE 9788998.03d0
+END
+
+FLOW_CONDITION no_flow
+  TYPE
+    FLUX neumann
+  /
+  FLUX 0.d0
+END
+
+FLOW_CONDITION east
+  TYPE
+    PRESSURE dirichlet
+  /
+  PRESSURE 9786257.1d0
+END
+
+FLOW_CONDITION west
+  TYPE
+    PRESSURE dirichlet
+  END
+  PRESSURE 9788998.03d0
+END
+
+FLOW_CONDITION well_injection
+  TYPE
+    RATE volumetric_rate
+  /
+  RATE list
+    TIME_UNITS day
+    DATA_UNITS m^3/day
+    0.0     0.
+    10.0    272.55
+    30.0    0.
+  END
+END
+
+#=========================== transport conditions =============================
+TRANSPORT_CONDITION initial
+  TYPE dirichlet
+  CONSTRAINT_LIST
+    0.d0 initial
+  END
+END
+
+TRANSPORT_CONDITION inlet
+  TYPE dirichlet
+  CONSTRAINT_LIST
+    0.d0 inlet
+  END
+END
+
+TRANSPORT_CONDITION injectant
+  TYPE dirichlet
+  CONSTRAINT_LIST
+    0.d0 injectant
+  END
+END
+
+TRANSPORT_CONDITION outlet
+  TYPE dirichlet_zero_gradient
+  CONSTRAINT_LIST
+    0.d0 inlet
+  END
+END
+
+#=========================== constraints ======================================
+CONSTRAINT initial
+  CONCENTRATIONS
+    molasses    1.d-20 T
+    ethanol     1.d-20 T
+    biocide     1.d-20 T
+    Cr(VI)      1.923d-05 T # 1000 ppb
+  END
+  IMMOBILE
+    biomass     1.d-10
+    molasses_im 1.d-20
+  END
+  MINERALS
+    chubbite    0.85 1.0    # 0.15 is initial porosity
+  END
+END
+
+CONSTRAINT inlet
+  CONCENTRATIONS
+    molasses    1.d-20 T
+    ethanol     1.d-20 T
+    biocide     1.d-20 T
+    Cr(VI)      1.923d-05 T # 1000 ppb
+  END
+END
+
+CONSTRAINT injectant
+  CONCENTRATIONS
+    molasses    1.d-2 T
+    ethanol     1.d0 T
+    biocide     1.d-20 T
+    Cr(VI)      1.923d-05 T # 1000 ppb
+  END
+END
+
+#=========================== condition couplers ===============================
+# initial condition
+INITIAL_CONDITION
+  TRANSPORT_CONDITION initial
+  FLOW_CONDITION initial
+  REGION all
+END
+
+BOUNDARY_CONDITION west
+  TRANSPORT_CONDITION inlet
+  FLOW_CONDITION initial
+  REGION west
+END
+
+BOUNDARY_CONDITION east
+  TRANSPORT_CONDITION outlet
+  FLOW_CONDITION east
+  REGION east
+END
+
+SOURCE_SINK well_injection
+  FLOW_CONDITION well_injection
+  TRANSPORT_CONDITION injectant
+  REGION well_injection
+/
+
+#=========================== stratigraphy couplers ============================
+STRATA
+  REGION all
+  MATERIAL soil1
+END
+
+END_SUBSURFACE
