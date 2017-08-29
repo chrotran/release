@@ -3,88 +3,65 @@
 # Description: Benchmark for abiotic reaction without retardation.
 #------------------------------------------------------------------------------
 import sys
-sys.path.append('../python/')
-import pyfun as pf
 import os
 import numpy as np
 import itertools as it
 import matplotlib.pyplot as plt
-from matplotlib import rc
-rc('text', usetex=True)
+import odespy
 
 # ------------------------------------------------------------------------------
 # Python numerical simulation
 # ------------------------------------------------------------------------------
-def chrotran_sandbox(u, t):
-	C = u[0]/L_water # [M]
-	D_m = u[1]/L_water # [M]
-	I = u[2]/L_water # [M]
-	X = u[3]/L_water # [M]
-	B = u[4] # [mol/m^3_bulk]
-	D_i = u[5] # [mol/m^3_bulk]
-
-	D = D_m + D_i * immobile_to_water_vol # [mol/L water]
-	mu_B = lambda_B1 * B * D/(D + K_D) * (K_B / (K_B + B))**alpha * K_I/(K_I + I) # [mol/m3 bulk/s]
-	mu_CD = gamma_CD * C * D # mol/L/s
-
-	# calculate changes to residuals
-	R_C = -lambda_C*B*C/(K_C+C)*volume - S_C*mu_CD*volume*immobile_to_water_vol
-
-	R_D_m = (-S_D_1 * (D_m/D) * mu_B * volume -
-		lambda_D * (D_m/D) * B * volume - 
-		S_D_2 * (D_m/D) * mu_CD * volume * immobile_to_water_vol - 
-		lambda_D_i * D_m * volume * immobile_to_water_vol + 
-		lambda_D_m * D_i * volume)
-
-	return [R_C,R_D_m,0,0,0,0]
+execfile('../python/pyfun.py')
 
 # Parameters
-s = 1.0
-por = 0.25 
-volume = 1.0 # m^3
-L_water = volume * por * s * 1.e3
-immobile_to_water_vol = por * s * 1.e3 # L water / m3_bulk
+pars = {'s'				: 1.0, # saturation
+		'por'			: 0.25, # porosity
+		'v_cell'		: 1.0, # m^3
 
-alpha = 1.0
-B_min = 1.e-10 # [mol/m^3]
-gamma_B = 0.0 # [L/mol/s]
-gamma_CD = 1.0 # [L/mol/s]
-gamma_X = 0.0 # [L/mol/s]
-lambda_B1 = 0.0 # [/s]
-lambda_B2 = 1.e-5 # [/s]
-lambda_C = 0.0 # [/s]
-lambda_D = 1.e-5 # [/s]
-lambda_D_m = 0.0 # [/s]
-lambda_D_i = 0.0 # [/s]
+		'alpha'			: 1.0, # [-]
+		'B_min'			: 1.e-10, # [mol/m^3]
+		'rho_b'			: 1.e20, # [g/L = M]
 
-K_B = 5.e1 #  [mol/L_bulk]
-K_C = 1.e-7 # [M]
-K_D = 1.e-6 # [M]
-K_I = 1.e-4 # [M]
-       
-rho_b = 1.e20 # [g/L = M]
+		'gamma_B'		: 0.0, # [L/mol/s]
+		'gamma_CD'		: 1.0, # [L/mol/s]
+		'gamma_X'		: 0.0, # [L/mol/s]
 
-S_C = 0.33 # [-]
-S_D_1 = 1.0 # [-]
-S_D_2 = 0.020833# [-]
+		'lambda_B1'		: 0.0, # [/s]
+		'lambda_B2'		: 1.e-5, # [/s]
+		'lambda_C'		: 0.0, # [/s]
+		'lambda_D'		: 1.e-5, # [/s]
+		'lambda_D_m'	: 0.0, # [/s]
+		'lambda_D_i'	: 0.0, # [/s]
 
-import odespy
-# solver = odespy.RK4(f)
-solver = odespy.CashKarp(chrotran_sandbox)
-solver.set_initial_condition([
-	1.e-2*por*s*1e3, # C
-	1.e-2*por*s*1e3, # D_m
-	1.e-20*por*s*1e3, # I
-	1.e-20*por*s*1e3, # X
-	1.e-20, # B
-	1.e-20, # D_i
-	])  
+		'K_B'			: 5.e1, #  [mol/L_bulk]
+		'K_C'			: 1.e-7, # [M]
+		'K_D'			: 1.e-6, # [M]
+		'K_I'			: 1.e-4, # [M]
 
-T = 0.1*3600 # end of simulation [s]
-N = 1000 # no of timesteps
-time_points = np.linspace(0,T,N+1)
-u, t = solver.solve(time_points)
+		'S_C'			: 0.33, # [-]
+		'S_D_1'			: 1.0, # [-]
+		'S_D_2'			: 0.020833# [-]
+}
 
+# Solver options
+sopt = {'T' :	0.1*3600, # end of simulation [s from hr]
+		'N' :	1000, # no of timesteps
+}
+
+# Initial conditions
+init = {'C'		: 1.e-2, # [M]
+		'D_m'	: 1.e-2, # [M]
+		'I'		: 1.e-20, # [M]
+		'X'		: 1.e-20, # [M]
+		'B'		: 1.e-20, # mol/m^3_bulk
+		'D_i'	: 1.e-20, # mol/m^3_bulk
+		'chubbite_vf' : 0.85, # [m^3/m^3_bulk]
+}
+
+u, t = run_ode()
+
+L_water = pars['v_cell'] * pars['por'] * pars['s'] *1.e3 # [L]
 C = u[:,0]/L_water
 D_m = u[:,1]/L_water
 I = u[:,2]/L_water
@@ -108,7 +85,7 @@ majorFormatter = plt.matplotlib.ticker.FormatStrFormatter("%0.1e")
 combined_var_obs_list = [variable_list, observation_list]
 combined_var_obs_list = list(it.product(*combined_var_obs_list))
 
-time, data = pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
+time, data = getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
 # Plotting
