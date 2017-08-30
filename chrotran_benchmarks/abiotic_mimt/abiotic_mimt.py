@@ -31,8 +31,8 @@ pars = {'s'				: 1.0, # saturation
 		'lambda_B2'		: 1.e-5, # [/s]
 		'lambda_C'		: 0.0, # [/s]
 		'lambda_D'		: 0.0, # [/s]
-		'lambda_D_m'	: 0.0, # [/s]
-		'lambda_D_i'	: 0.0, # [/s]
+		'lambda_D_i'	: 150.e-2, # [/s]
+		'lambda_D_m'	: 1.e-2, # [/s]
 
 		'K_B'			: 5.e1, #  [mol/L_bulk]
 		'K_C'			: 1.e-7, # [M]
@@ -73,9 +73,9 @@ chubbite = u[:,6]
 # ------------------------------------------------------------------------------
 # Compare with pflotran simulation
 # ------------------------------------------------------------------------------
-simbasename = "abiotic"
+simbasename = "abiotic_mimt"
 observation_filename = [simbasename + '-obs-0.tec']
-variable_list = ['Total molasses [M]', "Total Cr(VI)"]
+variable_list = ['Total molasses [M]', 'Total Cr(VI)', 'molasses_im [mol/m^3]']
 observation_list = ['obs1']
 plot_filename = 'test.png'
 x_label = 'time [h]'
@@ -95,18 +95,18 @@ ax = fig.add_subplot(1, 2, 1)
 xrange = [0,0.1]
 fontsize = 9
 
-combined_var_obs_list = [variable_list, observation_list]
+combined_var_obs_list = [variable_list[0:2], observation_list]
 combined_var_obs_list = list(it.product(*combined_var_obs_list))
-legend_list = ['molasses - PFLOTRAN','Cr(VI) - PFLOTRAN', 'molasses - odespy','Cr(VI) - odespy']
+legend_list = ['D_m - PFLOTRAN','Cr(VI) - PFLOTRAN', 'D_m - odespy','Cr(VI) - odespy']
 
 lns = []
 for item in combined_var_obs_list:
 	ln, = ax.plot(time, data[item[0] + " " + item[1]], linestyle='-')
 	lns.append(ln)
 
-ln, =  ax.plot(t[::50]/3600,C[::50],c="g",ls=' ',marker = 'o')
-lns.append(ln)
 ln, =  ax.plot(t[::50]/3600,D_m[::50],c="b",ls=' ',marker = 'o')
+lns.append(ln)
+ln, =  ax.plot(t[::50]/3600,C[::50],c="g",ls=' ',marker = 'o')
 lns.append(ln)
 
 ax.set_xlim(xrange)
@@ -114,4 +114,19 @@ ax.set_xlabel("Time [hr]")
 ax.yaxis.set_major_formatter(majorFormatter)
 ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
 
+# Second plot
+ax2 = fig.add_subplot(1, 2, 2)
+combined_var_obs_list = [[variable_list[2]], observation_list]
+combined_var_obs_list = list(it.product(*combined_var_obs_list))
+legend_list = ['D_i - PFLOTRAN','D_i - odespy']
+
+lns2 = []
+for item in combined_var_obs_list:
+	ln, = ax2.plot(time, data[item[0] + " " + item[1]], linestyle='-')
+	lns2.append(ln)
+
+ln, =  ax2.plot(t[::50]/3600,D_i[::50],c="b",ls=' ',marker = 'o')
+lns2.append(ln)
+
 plt.savefig(simbasename + '.png')
+plt.show()

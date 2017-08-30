@@ -10,8 +10,9 @@ def chrotran_sandbox(u, t):
 	D_m = u[1]/L_water # [M]
 	I = u[2]/L_water # [M]
 	X = u[3]/L_water # [M]
-	B = u[4] # [mol/m^3_bulk]
-	D_i = u[5] # [mol/m^3_bulk]
+	B = u[4]/pars['v_cell'] # [mol/m^3_bulk]
+	D_i = u[5]/pars['v_cell'] # [mol/m^3_bulk]
+	chubbite_vf = u[6]
 
 	D = D_m + D_i * immobile_to_water_vol # [mol/L water]
 	mu_B = pars['lambda_B1'] * B * D/(D + pars['K_D']) * (pars['K_B'] / (pars['K_B'] + B))**pars['alpha'] * pars['K_I']/(pars['K_I'] + I) # [mol/m3 bulk/s]
@@ -31,11 +32,11 @@ def chrotran_sandbox(u, t):
 		pars['S_D_2'] * (D_i/D) * mu_CD * pars['v_cell'] * immobile_to_water_vol +
 		pars['lambda_D_i'] * D_m * pars['v_cell'] * immobile_to_water_vol -
 		pars['lambda_D_m'] * D_i * pars['v_cell'])
-		
+
 	return [R_C,R_D_m,0,0,0,R_D_i,0]
 
 def run_ode():
-	# solver = odespy.RK4(f)
+	# solver = odespy.RK4(chrotran_sandbox)
 	solver = odespy.CashKarp(chrotran_sandbox)
 	solver.set_initial_condition([
 		init['C']*pars['por']*pars['s']*1e3, # C
