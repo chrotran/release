@@ -31,8 +31,8 @@ pars = {'s'				: 1.0, # saturation
 		'lambda_B2'		: 1.e-5, # [/s]
 		'lambda_C'		: 0.0, # [/s]
 		'lambda_D'		: 0.0, # [/s]
-		'lambda_D_m'	: 0.0, # [/s]
 		'lambda_D_i'	: 0.0, # [/s]
+		'lambda_D_m'	: 0.0, # [/s]
 
 		'K_B'			: 5.e1, #  [mol/L_bulk]
 		'K_C'			: 1.e-7, # [M]
@@ -62,56 +62,44 @@ init = {'C'		: 1.e-2, # [M]
 u, t = run_ode()
 
 L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
-C = u[:,0]/L_water
-D_m = u[:,1]/L_water
-I = u[:,2]/L_water
-X = u[:,3]/L_water
-B = u[:,4]
-D_i = u[:,5]
-chubbite = u[:,6]
+results_ode = {}
+results_ode['time'] = t/3600 # [hr from s]
+results_ode['C'] = u[:,0]/L_water
+results_ode['D_m'] = u[:,1]/L_water
+results_ode['I'] = u[:,2]/L_water
+results_ode['X'] = u[:,3]/L_water
+results_ode['B'] = u[:,4]/pars['v_cell']
+results_ode['D_i'] = u[:,5]/pars['v_cell']
+results_ode['chubbite_vf'] = u[:,6]
 
 # ------------------------------------------------------------------------------
 # Compare with pflotran simulation
 # ------------------------------------------------------------------------------
 simbasename = "abiotic"
 observation_filename = [simbasename + '-obs-0.tec']
-variable_list = ['Total molasses [M]', "Total Cr(VI)"]
+variable_list = ['Total molasses [M]', 'Total Cr(VI)']
 observation_list = ['obs1']
-plot_filename = 'test.png'
-x_label = 'time [h]'
-y_label = 'Concentration [M]'
-xrange=([0,0.1])
-
-time, data = getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
+results_pflotran =  getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
 # Plotting
 # ------------------------------------------------------------------------------
 majorFormatter = plt.matplotlib.ticker.FormatStrFormatter("%0.1e")
+mycmap=plt.cm.jet(np.linspace(0,1,5))
 
 # First plot
-fig = plt.figure()
-ax = fig.add_subplot(1, 2, 1)
-xrange = [0,0.1]
+fig = plt.figure(figsize=[5,5])
+ax = fig.add_subplot(1, 1, 1)
+xlims = [0,0.1]
+skipfactor = 50 # skip data in ode results
 fontsize = 9
 
-combined_var_obs_list = [variable_list, observation_list]
-combined_var_obs_list = list(it.product(*combined_var_obs_list))
-legend_list = ['molasses - PFLOTRAN','Cr(VI) - PFLOTRAN', 'molasses - odespy','Cr(VI) - odespy']
+pflo_plotvars = [variable_list, observation_list]
+pflo_plotvars = list(it.product(*pflo_plotvars))
+ode_plotvars = ['D_m','C']
+legend_list = ['D_m - PFLOTRAN','Cr(VI) - PFLOTRAN', 'D_m - odespy','Cr(VI) - odespy']
 
-lns = []
-for item in combined_var_obs_list:
-	ln, = ax.plot(time, data[item[0] + " " + item[1]], linestyle='-')
-	lns.append(ln)
+plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]",ylabel="Concentration [M]", xlims=xlims, skipfactor=skipfactor, fontsize=fontsize)
 
-ln, =  ax.plot(t[::50]/3600,C[::50],c="g",ls=' ',marker = 'o')
-lns.append(ln)
-ln, =  ax.plot(t[::50]/3600,D_m[::50],c="b",ls=' ',marker = 'o')
-lns.append(ln)
-
-ax.set_xlim(xrange)
-ax.set_xlabel("Time [hr]")
-ax.yaxis.set_major_formatter(majorFormatter)
-ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
-
+plt.tight_layout()
 plt.savefig(simbasename + '.png')
