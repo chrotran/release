@@ -17,10 +17,10 @@ execfile('../python/pyfun.py')
 # Parameters
 pars = {'s'				: 1.0, # saturation
 		'por'			: 0.25, # porosity
-		'v_cell'		: 1.0, # m^3
+		'v_cell'		: 1.0, # m3_bulk
 
 		'alpha'			: 1.0, # [-]
-		'B_min'			: 1.e-10, # [mol/m^3]
+		'B_min'			: 1.e-10, # [mol/m3_bulk]
 		'rho_b'			: 1.e20, # [g/L = M]
 
 		'gamma_B'		: 0.0, # [L/mol/s]
@@ -34,7 +34,7 @@ pars = {'s'				: 1.0, # saturation
 		'lambda_D_i'	: 150.e-2, # [/s]
 		'lambda_D_m'	: 1.e-2, # [/s]
 
-		'K_B'			: 5.e1, #  [mol/L_bulk]
+		'K_B'			: 5.e1, #  [mol/m3_bulk]
 		'K_C'			: 1.e-7, # [M]
 		'K_D'			: 1.e-6, # [M]
 		'K_I'			: 1.e-4, # [M]
@@ -56,20 +56,21 @@ init = {'C'		: 1.e-2, # [M]
 		'X'		: 1.e-20, # [M]
 		'B'		: 1.e-20, # mol/m^3_bulk
 		'D_i'	: 1.e-20, # mol/m^3_bulk
-		'chubbite_vf' : 0.85, # [m^3/m^3_bulk]
+		'chubbite_vf' : 1-pars['por'], # [m^3/m^3_bulk]  #?????
 }
 
-u, t = run_ode()
+chrotran_sandbox = make_chrotran_sandbox(pars)
+u, t = run_ode(init, pars, sopt, chrotran_sandbox)
 
 L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
 results_ode = {}
 results_ode['time'] = t/3600 # [hr from s]
-results_ode['C'] = u[:,0]/L_water
-results_ode['D_m'] = u[:,1]/L_water
-results_ode['I'] = u[:,2]/L_water
-results_ode['X'] = u[:,3]/L_water
-results_ode['B'] = u[:,4]/pars['v_cell']
-results_ode['D_i'] = u[:,5]/pars['v_cell']
+results_ode['C'] = u[:,0]
+results_ode['D_m'] = u[:,1]
+results_ode['I'] = u[:,2]
+results_ode['X'] = u[:,3]
+results_ode['B'] = u[:,4]
+results_ode['D_i'] = u[:,5]
 results_ode['chubbite_vf'] = u[:,6]
 
 # ------------------------------------------------------------------------------
