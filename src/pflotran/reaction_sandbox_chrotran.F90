@@ -373,8 +373,8 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
 
   PetscInt, parameter :: iphase = 1
   PetscReal :: L_water
-  PetscReal :: mu_B, mu_D
-  PetscReal :: dmu_dF, dmu_dB, sum_food
+  PetscReal :: mu_B, mu_CD
+  PetscReal :: sum_food
   PetscInt :: idof_food_mobile, idof_food_immobile, idof_biomass, idof_Cr
   PetscInt :: idof_alcohol, idof_biomineral, idof_biocide
   PetscReal :: immobile_to_water_vol
@@ -463,7 +463,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
         (this%inhibition_I + &
          rt_auxvar%total(idof_alcohol,iphase)))
 
-  mu_D = this%mass_action_CD*sum_food*rt_auxvar%total(idof_Cr,iphase)    ! mol/L/s
+  mu_CD = this%mass_action_CD*sum_food*rt_auxvar%total(idof_Cr,iphase)    ! mol/L/s
 
   Residual(idof_Cr) =      Residual(idof_Cr) + &
                            ! Biological reaction, mol/s
@@ -474,7 +474,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
                            rt_auxvar%total(idof_Cr,iphase))* &                    ! mol/L
                            material_auxvar%volume + &                             ! m3 bulk
                            ! Direct reaction, mol/s
-                           this%stoichiometric_C*mu_D* &                 ! mol/L water/s
+                           this%stoichiometric_C*mu_CD* &                 ! mol/L water/s
                            material_auxvar%volume* &                              ! m3 bulk
                            immobile_to_water_vol                                  ! L water/m3 bulk
 
@@ -486,7 +486,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
                             this%background_concentration_B)* &                                  ! mol/m3 bulk
                            material_auxvar%volume + &                             ! m3 bulk
                            ! Biocide reaction, mol/s
-                           this%mass_action_X* &                 ! L/mol/s
+                           this%mass_action_B* &                 ! L/mol/s
                            (rt_auxvar%immobile(this%B_id) - &
                            this%background_concentration_B)* &                                   ! mol/m3 bulk
                            rt_auxvar%total(idof_biocide,iphase)* &                ! mol/L
@@ -511,7 +511,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
                            ! Direct reaction, mol/s
                            this%stoichiometric_D_2* &
                            mobile_mole_fraction* &                                ! dimensionless
-                           mu_D*material_auxvar%volume* &                         ! mol/L/s * m3 bulk
+                           mu_CD*material_auxvar%volume* &                         ! mol/L/s * m3 bulk
                            immobile_to_water_vol + &                              ! L water/m3 bulk
                            ! immobilization, mol/s
                            this%rate_D_i* &                   ! 1/s
@@ -537,7 +537,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
                            ! Direct reaction, mol/s
                            this%stoichiometric_D_2* &
                            immobile_mole_fraction* &                              ! dimensionless
-                           mu_D*material_auxvar%volume* &                         ! mol/L/s * m3 bulk
+                           mu_CD*material_auxvar%volume* &                         ! mol/L/s * m3 bulk
                            immobile_to_water_vol - &                              ! L water/m3 bulk
                            ! immobilization, mol/s
                            this%rate_D_i* &                   ! 1/s
@@ -550,7 +550,7 @@ subroutine ChrotranReact(this,Residual,Jacobian,compute_derivative, &
                            material_auxvar%volume                                 ! m3 bulk
 
 Residual(idof_biocide) = Residual(idof_biocide) + &
-                         this%mass_action_B* &                           ! L/mol/s
+                         this%mass_action_X* &                           ! L/mol/s
                          rt_auxvar%total(idof_biocide,iphase)* &                  ! mol/L
                          rt_auxvar%immobile(this%B_id)* &                   ! mol/m3 bulk
                          material_auxvar%volume                                   ! m3 bulk
@@ -593,8 +593,8 @@ subroutine ChrotranKineticState(this,rt_auxvar,global_auxvar, &
   PetscReal :: biomass_residual_delta, delta_volfrac
   
   PetscReal :: L_water
-  PetscReal :: mu_B, mu_D
-  PetscReal :: dmu_dF, dmu_dB, sum_food
+  PetscReal :: mu_B, mu_CD
+  PetscReal :: sum_food
   PetscInt :: idof_food_mobile, idof_food_immobile, idof_biomass, idof_Cr
   PetscInt :: idof_alcohol, idof_biomineral, idof_biocide
   PetscReal :: immobile_to_water_vol
@@ -630,7 +630,7 @@ subroutine ChrotranKineticState(this,rt_auxvar,global_auxvar, &
             this%background_concentration_B)* &                                   ! mol/m3 bulk
             material_auxvar%volume + &                             ! m3 bulk
             ! Biocide reaction, mol/s
-            this%mass_action_X* &                 ! L/mol/s
+            this%mass_action_B* &                 ! L/mol/s
             (rt_auxvar%immobile(this%B_id) - &
             this%background_concentration_B)* &                                   ! mol/m3 bulk
             rt_auxvar%total(idof_biocide,iphase)* &                ! mol/L

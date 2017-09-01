@@ -44,30 +44,30 @@ CHEMISTRY
        NAME_BIOMINERAL      chubbite
 
        EXPONENT_B           1.0         # alpha [-]
-       
-       BACKGROUND_CONC_B    1.e-10      # B_min [mol/m^3]
+
+       BACKGROUND_CONC_B    1.e-10      # B_min [mol/m^3_bulk]
 
        MASS_ACTION_B        0.d0        # Gamma_B [L/mol/s]
        MASS_ACTION_CD       1.0         # Gamma_CD [L/mol/s]
        MASS_ACTION_X        0.d0        # Gamma_X [L/mol/s]
 
        RATE_B_1             1.d-5       # lambda_B1 [/s]
-       RATE_B_2             1.d-6       # lambda_B2 [/s]  
-       RATE_C               1.d-10      # lambda_C [/s]       
+       RATE_B_2             1.d-6       # lambda_B2 [/s]
+       RATE_C               1.d-10      # lambda_C [/s]
        RATE_D               0.d0        # lambda_D [/s]
        RATE_D_IMMOB         150.d-2     # lambda_D_i [/s]
        RATE_D_MOBIL         1.d-2       # lambda_D_m [/s]
-       
-       INHIBITION_B         5.d1        # K_B [mol/L_bulk]       
+
+       INHIBITION_B         5.d1        # K_B [mol/m^3_bulk]
        INHIBITION_C         1.d-7       # K_C [M]
-       MONOD_D              1.d-6       # K_F [M]
-       INHIBITION_I         1.d0        # K_A [M]
-       
+       MONOD_D              1.d-6       # K_D [M]
+       INHIBITION_I         1.d0        # K_I [M]
+
        DENSITY_B            1.d20       # [g/L = M]
-       
+
        STOICHIOMETRIC_C     0.33d0      # S_C [-]
        STOICHIOMETRIC_D_1   1.d0        # S_D_1 [-]
-       STOICHIOMETRIC_D_2   0.020833d0  # S_D_2 [-]       
+       STOICHIOMETRIC_D_2   0.020833d0  # S_D_2 [-]
     END
   END
   MINERAL_KINETICS

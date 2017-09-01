@@ -15,7 +15,7 @@ def make_chrotran_sandbox(pars):
         D_i = u[5] # [mol/m3_bulk]
         chubbite_vf = u[6]
         
-        theta0 = pars['por'] * pars['s'] * liter_b_to_m3_b # L water / m3_bulk
+        theta0 = pars['por'] * pars['s'] * liter_b_to_m3_b # L_water / m3_bulk
         #theta0 = max(0.01,(1 -chubbite_vf)) * pars['s'] * liter_b_to_m3_b # L water / m3_bulk
 
         D = D_m + D_i / theta0 # [mol/L water]
@@ -23,19 +23,19 @@ def make_chrotran_sandbox(pars):
         mmf = D_m/D # mobile mole fraction
         immf = 1-mmf
 
-        mu_B = pars['lambda_B1'] * B * D/(D + pars['K_D']) * pars['K_B'] / (pars['K_B'] + B)**pars['alpha'] * pars['K_I']/(pars['K_I'] + I) # [mol/m3 bulk/s]
+        mu_B = pars['lambda_B1'] * B * D/(D + pars['K_D']) * pars['K_B'] / (pars['K_B'] + B)**pars['alpha'] * pars['K_I']/(pars['K_I'] + I) # [mol/m^3_bulk/s]
         
-        mu_CD = pars['gamma_CD'] * C * D # mol/L/s
+        mu_CD = pars['gamma_CD'] * C * D # [mol/L_water/s]
 
-        # MOBILE DERIVATIVES
-        dC_dt = (- pars['lambda_C']*(B/theta0)*C/(pars['K_C']+C) 
+        # MOBILE DERIVATIVES [mol/L_water/s]
+        dC_dt = (- pars['lambda_C']*(B/theta0)*C/(pars['K_C']+C)
                  - pars['S_C']*mu_CD
                  )
 
-        dDm_dt = (- pars['S_D_1'] * mmf * (mu_B/theta0)  
-                  - pars['lambda_D'] * mmf * (B/theta0) 
-                  - pars['S_D_2'] * mmf * mu_CD 
-                  - pars['lambda_D_i'] * D_m 
+        dDm_dt = (- pars['S_D_1'] * mmf * (mu_B/theta0)
+                  - pars['lambda_D'] * mmf * (B/theta0)
+                  - pars['S_D_2'] * mmf * mu_CD
+                  - pars['lambda_D_i'] * D_m
                   + pars['lambda_D_m'] * (D_i/theta0)
                   )
         
@@ -43,14 +43,14 @@ def make_chrotran_sandbox(pars):
         
         dX_dt = - pars['gamma_X'] * X * (B/theta0)
         
-        # IMMOBILE DERIVATIVES
+        # IMMOBILE DERIVATIVES [mol/m^3_bulk/s]
         dB_dt = (- mu_B 
-                 + pars['lambda_B2'] * (B - pars['B_min']) 
-                 + pars['gamma_X'] * (B - pars['B_min'])*X
+                 + pars['lambda_B2'] * (B - pars['B_min'])
+                 + pars['gamma_B'] * (B - pars['B_min']) * X
                  )
 
-        dDi_dt = (- pars['S_D_1'] * immf * mu_B 
-                  - pars['lambda_D'] * immf * B 
+        dDi_dt = (- pars['S_D_1'] * immf * mu_B
+                  - pars['lambda_D'] * immf * B
                   - pars['S_D_2'] * immf * mu_CD * theta0
                   + pars['lambda_D_i'] * D_m * theta0
                   - pars['lambda_D_m'] * D_i
