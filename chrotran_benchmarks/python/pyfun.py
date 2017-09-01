@@ -1,6 +1,7 @@
 import numpy as np
 import itertools as it
 import odespy
+import matplotlib.pyplot as plt
 
 liter_b_to_m3_b = 1e3
 
@@ -111,7 +112,7 @@ def getobsdata(variable_list=[], observation_list=[], observation_filenames=[]):
 
 	return combined_dict_trimmed
 
-def plot_benchmarks(ax,results_ode = {}, results_pflotran = {}, ode_plotvars =[], pflo_plotvars = [], legend_list=[], xlabel='', ylabel='', xlims=[], ylims=[], skipfactor=1, fontsize=10):
+def plot_benchmarks(ax,results_ode = {}, results_pflotran = {}, ode_plotvars =[], pflo_plotvars = [], legend_list=[], xlabel='', ylabel='', xlims=[], ylims=[], skipfactor=1, fontsize=10, mycmap=plt.cm.jet(np.linspace(0,1,5)), majorFormatter=plt.matplotlib.ticker.FormatStrFormatter("%0.1e")):
 	"""
 	Plot data to an axis object
 	"""

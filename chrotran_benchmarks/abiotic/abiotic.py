@@ -1,6 +1,6 @@
-# Id: abiotic.py, Mon 28 Aug 2017 05:03:53 PM MDT pandeys #
+# Id: abiotic.py, Mon 28 Aug 2017 05:03:53 PM MDT #
 # Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
-# Description: Benchmark for abiotic reaction without retardation.
+# Description: Benchmark for abiotic reactions.
 #------------------------------------------------------------------------------
 import sys
 import os
@@ -8,18 +8,19 @@ import numpy as np
 import itertools as it
 import matplotlib.pyplot as plt
 import odespy
+sys.path.append('../python')
+import pyfun as pf
 
 # ------------------------------------------------------------------------------
 # Python numerical simulation
 # ------------------------------------------------------------------------------
-execfile('../python/pyfun.py')
-
 # Parameters
 pars = {'s'				: 1.0, # saturation
 		'por'			: 0.25, # porosity
-		'v_cell'		: 1e3, # L_bulk
+		'v_cell'		: 1.0, # m^3_bulk
+
 		'alpha'			: 1.0, # [-]
-		'B_min'			: 1.e-10, # [mol/L_bulk]
+		'B_min'			: 1.e-10, # [mol/m^3_bulk]
 		'rho_b'			: 1.e20, # [g/L = M]
 
 		'gamma_B'		: 0.0, # [L/mol/s]
@@ -33,7 +34,7 @@ pars = {'s'				: 1.0, # saturation
 		'lambda_D_i'	: 0.0, # [/s]
 		'lambda_D_m'	: 0.0, # [/s]
 
-		'K_B'			: 5.e1, #  [mol/L_bulk]
+		'K_B'			: 5.e1, #  [mol/m^3_bulk]
 		'K_C'			: 1.e-7, # [M]
 		'K_D'			: 1.e-6, # [M]
 		'K_I'			: 1.e-4, # [M]
@@ -58,10 +59,10 @@ init = {'C'		: 1.e-2, # [M]
 		'chubbite_vf' : 1-pars['por'], # [m^3/m^3_bulk]
 }
 
-chrotran_sandbox = make_chrotran_sandbox(pars)
-u, t = run_ode(init, pars, sopt, chrotran_sandbox)
+chrotran_sandbox = pf.make_chrotran_sandbox(pars)
+u, t = pf.run_ode(init, pars, sopt, chrotran_sandbox)
 
-#L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
+# L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
 results_ode = {}
 results_ode['time'] = t/3600 # [hr from s]
 results_ode['C'] = u[:,0]
@@ -79,14 +80,11 @@ simbasename = "abiotic"
 observation_filename = [simbasename + '-obs-0.tec']
 variable_list = ['Total molasses [M]', 'Total Cr(VI)']
 observation_list = ['obs1']
-results_pflotran =  getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
+results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
 # Plotting
 # ------------------------------------------------------------------------------
-majorFormatter = plt.matplotlib.ticker.FormatStrFormatter("%0.1e")
-mycmap=plt.cm.jet(np.linspace(0,1,5))
-
 # First plot
 fig = plt.figure(figsize=[5,5])
 ax = fig.add_subplot(1, 1, 1)
@@ -99,7 +97,7 @@ pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['D_m','C']
 legend_list = ['D_m - PFLOTRAN','Cr(VI) - PFLOTRAN', 'D_m - odespy','Cr(VI) - odespy']
 
-plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]",ylabel="Concentration [M]", xlims=xlims, skipfactor=skipfactor, fontsize=fontsize)
+pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]",ylabel="Concentration [M]", xlims=xlims, skipfactor=skipfactor, fontsize=fontsize)
 
 plt.tight_layout()
 plt.savefig(simbasename + '.png')
