@@ -1,0 +1,225 @@
+#Description: Chrome bio batch experiment
+
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_FLOW flow
+      MODE RICHARDS
+    /
+    SUBSURFACE_TRANSPORT transport
+      GLOBAL_IMPLICIT
+      NUMERICAL_JACOBIAN
+    /
+  /
+END
+
+
+SUBSURFACE
+
+#=========================== chemistry ========================================
+CHEMISTRY
+  PRIMARY_SPECIES
+    molasses
+    Cr(VI)
+    ethanol
+    biocide
+  END
+  IMMOBILE_SPECIES
+    biomass
+    molasses_im
+  END
+  MINERALS
+    chubbite        # dummy mineral volume fraction = 0.85, porosity = 0.15
+  END
+  REACTION_SANDBOX
+    CHROTRAN_PARAMETERS
+       NAME_D_MOBILE        molasses
+       NAME_D_IMMOBILE      molasses_im
+       NAME_C               Cr(VI)
+       NAME_B               biomass
+       NAME_I               ethanol
+       NAME_X               biocide
+       NAME_BIOMINERAL      chubbite
+
+       EXPONENT_B           1.0         # alpha [-]
+
+       BACKGROUND_CONC_B    1.e-10      # B_min [mol/m^3_bulk]
+
+       MASS_ACTION_B        0.d0        # Gamma_B [L/mol/s]
+       MASS_ACTION_CD       0.d0        # Gamma_CD [L/mol/s]
+       MASS_ACTION_X        0.d0        # Gamma_X [L/mol/s]
+
+       RATE_B_1             1.d-3       # lambda_B1 [/s]
+       RATE_B_2             0.d0        # lambda_B2 [/s]
+       RATE_C               0.d0        # lambda_C [/s]
+       RATE_D               0.d0        # lambda_D [/s]
+       RATE_D_IMMOB         0.d0        # lambda_D_i [/s]
+       RATE_D_MOBIL         0.d0        # lambda_D_m [/s]
+
+       INHIBITION_B         5.d1        # K_B [mol/m^3_bulk]
+       INHIBITION_C         1.d-7       # K_C [M]
+       MONOD_D              1.d-6       # K_D [M]
+       INHIBITION_I         1.d-4       # K_I [M]
+
+       DENSITY_B            1.d20       # [g/L = M]
+
+       STOICHIOMETRIC_C     0.33d0      # S_C [-]
+       STOICHIOMETRIC_D_1   1.d0        # S_D_1 [-]
+       STOICHIOMETRIC_D_2   0.020833d0  # S_D_2 [-]
+    END
+  END
+  MINERAL_KINETICS
+    chubbite 
+        RATE_CONSTANT 0.d0
+    END
+  END
+#  UPDATE_POROSITY
+#  MINIMUM_POROSITY 1.d-4
+#  UPDATE_PERMEABILITY
+#  UPDATE_MINERAL_SURFACE_AREA
+  DATABASE ../../chrotran_examples/chem.dat
+  OUTPUT
+    ALL
+    FREE_ION
+    TOTAL
+  /
+  LOG_FORMULATION
+END
+
+#=========================== solver options ===================================
+LINEAR_SOLVER TRANSPORT
+  SOLVER DIRECT
+END
+
+NEWTON_SOLVER TRANSPORT
+  STOL 1.d-30
+  ITOL 1.d-8
+  RTOL 1.d-8
+END
+
+TIMESTEPPER transport
+  #MAX_STEPS 1
+END
+
+#=========================== discretization ===================================
+GRID
+  TYPE structured
+    NXYZ 1 1 1
+    BOUNDS
+      0.d0 0.d0 0.d0
+      1.d0 1.d0 1.d0
+    /
+END
+
+#=========================== fluid properties =================================
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.d-9
+END
+
+#=========================== material properties ==============================
+MATERIAL_PROPERTY sand
+  ID 1
+  LONGITUDINAL_DISPERSIVITY 1.d0
+  POROSITY 0.25d0
+  TORTUOSITY 1.d0
+  PERMEABILITY
+    PERM_ISO 1.d-12
+  /
+  CHARACTERISTIC_CURVES sf
+END
+
+#=========================== saturation functions =============================
+CHARACTERISTIC_CURVES sf
+  SATURATION_FUNCTION VAN_GENUCHTEN
+    M 8.5714d-01
+    ALPHA 7.6825e-05
+    LIQUID_RESIDUAL_SATURATION 1.5d-1
+  /
+  PERMEABILITY_FUNCTION MUALEM_VG_LIQ
+    M 8.5714d-01
+    LIQUID_RESIDUAL_SATURATION 1.5d-1
+  /
+END
+
+#=========================== output options ===================================
+OUTPUT
+  PERIODIC_OBSERVATION TIMESTEP 1
+  PRINT_COLUMN_IDS
+END
+
+#=========================== times ============================================
+TIME
+  FINAL_TIME 10.0 h
+  INITIAL_TIMESTEP_SIZE 1.d0 s
+  MAXIMUM_TIMESTEP_SIZE 1.0d-2 h
+END
+
+#=========================== regions ==========================================
+REGION all
+  COORDINATES
+    0.d0 0.d0 0.d0
+    1.d0 1.d0 1.d0
+  /
+END
+
+REGION obs1
+  COORDINATES
+    0.5d0 0.5d0 0.5d0
+    0.5d0 0.5d0 0.5d0
+/
+END
+
+#=========================== flow conditions ==================================
+FLOW_CONDITION initial
+  TYPE
+    PRESSURE dirichlet    ! type is dirichlet for pressure
+  /
+    PRESSURE 1.0132e+05   ! saturated
+END
+
+#=========================== observation points ===============================
+OBSERVATION obs1
+  REGION obs1
+  AT_CELL_CENTER
+END
+
+#=========================== transport conditions =============================
+TRANSPORT_CONDITION initial
+  TYPE dirichlet
+  CONSTRAINT_LIST
+    0.d0 initial
+  /
+END
+
+#=========================== constraints ======================================
+CONSTRAINT initial
+  CONCENTRATIONS
+    molasses 1.d0 T
+    Cr(VI)   1.d-20 T
+    ethanol  1.d-20 T
+    biocide  1.d-20 T
+  /
+  IMMOBILE
+    biomass 1.d-3
+    molasses_im 1.d-20
+  /
+  MINERALS
+    chubbite    0.85 1.0    # 0.15 is initial porosity
+  /
+END
+
+#=========================== condition couplers ===============================
+# initial condition
+INITIAL_CONDITION
+  FLOW_CONDITION initial
+  TRANSPORT_CONDITION initial
+  REGION all
+END
+
+#=========================== stratigraphy couplers ============================
+STRATA
+  REGION all
+  MATERIAL sand
+END
+
+END_SUBSURFACE
