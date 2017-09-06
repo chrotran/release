@@ -135,3 +135,5 @@ def plot_benchmarks(ax,results_ode = {}, results_pflotran = {}, ode_plotvars =[]
 	if ylims: ax.set_ylim(ylims)
 	ax.yaxis.set_major_formatter(majorFormatter)
 	ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
+
+	return lns

@@ -28,7 +28,7 @@ pars = {'s'				: 1.0, # saturation
 		'gamma_X'		: 0.0, # [L/mol/s]
 
 		'lambda_B1'		: 1.e-3, # [/s]
-		'lambda_B2'		: 0.0, # [/s]
+		'lambda_B2'		: 1.e-5, # [/s]
 		'lambda_C'		: 0.0, # [/s]
 		'lambda_D'		: 0.0, # [/s]
 		'lambda_D_i'	: 0.0, # [/s]
@@ -46,7 +46,7 @@ pars = {'s'				: 1.0, # saturation
 
 # Solver options
 sopt = {'T' :	100*3600, # end of simulation [s from hr]
-		'N' :	1000, # no of timesteps
+		'N' :	100000, # no of timesteps
 }
 
 # Initial conditions
@@ -89,7 +89,7 @@ results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=o
 fig = plt.figure(figsize=[10,5])
 ax = fig.add_subplot(1, 2, 1)
 xlims = [0,100]
-skipfactor = 25 # skip data in ode results
+skipfactor = 2000 # skip data in ode results
 fontsize = 9
 
 pflo_plotvars = [[variable_list[0]], observation_list]
@@ -98,21 +98,15 @@ ode_plotvars = ['D_m']
 legend_list = ['D_m - PFLOTRAN', 'D_m - odespy']
 
 pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
-# pf.plot_benchmarks(ax, results_pflotran=results_pflotran, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize)
 
 # Second plot
 ax = fig.add_subplot(1, 2, 2)
-skipfactor = 50 # skip data in ode results
-fontsize = 9
-
 pflo_plotvars = [[variable_list[1]], observation_list]
 pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['B']
 legend_list = ['B - PFLOTRAN', 'B - odespy']
 
-pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
-# pf.plot_benchmarks(ax, results_pflotran=results_pflotran, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize)
+pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 
 plt.tight_layout()
-# plt.savefig(simbasename + '.png')
-plt.show()
+plt.savefig(simbasename + '.png')

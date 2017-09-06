@@ -52,7 +52,7 @@ sopt = {'T' :	12*3600, # end of simulation [s from hr]
 # Initial conditions
 init = {'C'		: 1.e-20, # [M]
 		'D_m'	: 1.0, # [M]
-		'I'		: 1.e-20, # [M]
+		'I'		: 1.e-4, # [M]
 		'X'		: 1.e-20, # [M]
 		'B'		: 1.e-5, # mol/m^3_bulk
 		'D_i'	: 1.e-20, # mol/m^3_bulk
@@ -76,11 +76,14 @@ results_ode['chubbite_vf'] = u[:,6]
 # ------------------------------------------------------------------------------
 # Compare with pflotran simulation
 # ------------------------------------------------------------------------------
-simbasename = "microbe_growth"
+simbasename = "microbe_growth_inhibitor"
 observation_filename = [simbasename + '-obs-0.tec']
 variable_list = ['Total molasses [M]', 'biomass [mol/m^3]']
 observation_list = ['obs1']
 results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
+
+observation_filename = ['microbe_growth_noinhibitor-obs-0.tec']
+results_pflotran_ctrl =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
 # Plotting
@@ -97,7 +100,13 @@ pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['D_m']
 legend_list = ['D_m - PFLOTRAN', 'D_m - odespy']
 
-pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+lns = pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+
+mycmap=plt.cm.jet(np.linspace(0,1,5))
+ln, = ax.plot(results_pflotran_ctrl['time'], results_pflotran_ctrl[pflo_plotvars[0][0] + " " + pflo_plotvars[0][1]], linestyle='--',c=mycmap[0])
+lns.append(ln)
+legend_list.append('D_m - PFLOTRAN (no inhibitor)')
+ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
 
 # Second plot
 ax = fig.add_subplot(1, 2, 2)
@@ -106,7 +115,12 @@ pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['B']
 legend_list = ['B - PFLOTRAN', 'B - odespy']
 
-pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+lns = pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+
+ln, = ax.plot(results_pflotran_ctrl['time'], results_pflotran_ctrl[pflo_plotvars[0][0] + " " + pflo_plotvars[0][1]], linestyle='--',c=mycmap[0])
+lns.append(ln)
+legend_list.append('B - PFLOTRAN (no inhibitor)')
+ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
 
 plt.tight_layout()
 plt.savefig(simbasename + '.png')

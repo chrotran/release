@@ -86,7 +86,7 @@ results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=o
 # Plotting
 # ------------------------------------------------------------------------------
 # First plot
-fig = plt.figure(figsize=[10,5])
+fig = plt.figure(figsize=[5,5])
 ax = fig.add_subplot(1, 1, 1)
 # xlims = [0,5]
 skipfactor = 25 # skip data in ode results

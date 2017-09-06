@@ -50,13 +50,13 @@ CHEMISTRY
        MASS_ACTION_X        0.d0        # Gamma_X [L/mol/s]
 
        RATE_B_1             1.d-3       # lambda_B1 [/s]
-       RATE_B_2             1.d-5        # lambda_B2 [/s]
+       RATE_B_2             0.d0        # lambda_B2 [/s]
        RATE_C               0.d0        # lambda_C [/s]
        RATE_D               0.d0        # lambda_D [/s]
        RATE_D_IMMOB         0.d0        # lambda_D_i [/s]
        RATE_D_MOBIL         0.d0        # lambda_D_m [/s]
 
-       INHIBITION_B         1.d0        # K_B [mol/m^3_bulk]
+       INHIBITION_B         5.d1        # K_B [mol/m^3_bulk]
        INHIBITION_C         1.d-7       # K_C [M]
        MONOD_D              1.d-6       # K_D [M]
        INHIBITION_I         1.d-4       # K_I [M]
@@ -149,9 +149,10 @@ END
 
 #=========================== times ============================================
 TIME
-  FINAL_TIME 100.0 h
-  INITIAL_TIMESTEP_SIZE 1.d-10 h
-  MAXIMUM_TIMESTEP_SIZE 1.0d-1 h
+  FINAL_TIME 10.0 h
+  INITIAL_TIMESTEP_SIZE 1.d0 s
+  MAXIMUM_TIMESTEP_SIZE 1.0d-3 h at 0.0 h
+  MAXIMUM_TIMESTEP_SIZE 1.0d-2 h at 5.0 h
 END
 
 #=========================== regions ==========================================
@@ -196,7 +197,7 @@ CONSTRAINT initial
   CONCENTRATIONS
     molasses 1.d0 T
     Cr(VI)   1.d-20 T
-    ethanol  1.d-20 T
+    ethanol  1.d-4 T
     biocide  1.d-20 T
   /
   IMMOBILE

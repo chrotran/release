@@ -86,7 +86,7 @@ results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=o
 # Plotting
 # ------------------------------------------------------------------------------
 # First plot
-fig = plt.figure(figsize=[10,5])
+fig = plt.figure(figsize=[5,5])
 ax = fig.add_subplot(1, 1, 1)
 xlims = [0,5]
 skipfactor = 10 # skip data in ode results
@@ -97,7 +97,7 @@ pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['B']
 legend_list = ['B - PFLOTRAN', 'B - odespy']
 
-pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 
 plt.tight_layout()
 plt.savefig(simbasename + '.png')

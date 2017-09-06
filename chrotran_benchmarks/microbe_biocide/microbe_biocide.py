@@ -23,11 +23,11 @@ pars = {'s'				: 1.0, # saturation
 		'B_min'			: 1.e-10, # [mol/m^3_bulk]
 		'rho_b'			: 1.e20, # [g/L = M]
 
-		'gamma_B'		: 0.0, # [L/mol/s]
+		'gamma_B'		: 1.e-4, # [L/mol/s]
 		'gamma_CD'		: 0.0, # [L/mol/s]
-		'gamma_X'		: 0.0, # [L/mol/s]
+		'gamma_X'		: 1.e-4, # [L/mol/s]
 
-		'lambda_B1'		: 1.e-3, # [/s]
+		'lambda_B1'		: 0.0, # [/s]
 		'lambda_B2'		: 0.0, # [/s]
 		'lambda_C'		: 0.0, # [/s]
 		'lambda_D'		: 0.0, # [/s]
@@ -45,16 +45,16 @@ pars = {'s'				: 1.0, # saturation
 }
 
 # Solver options
-sopt = {'T' :	12*3600, # end of simulation [s from hr]
-		'N' :	100000, # no of timesteps
+sopt = {'T' :	10*3600, # end of simulation [s from hr]
+		'N' :	1000, # no of timesteps
 }
 
 # Initial conditions
 init = {'C'		: 1.e-20, # [M]
-		'D_m'	: 1.0, # [M]
+		'D_m'	: 1.e-20, # [M]
 		'I'		: 1.e-20, # [M]
-		'X'		: 1.e-20, # [M]
-		'B'		: 1.e-5, # mol/m^3_bulk
+		'X'		: 1.e0, # [M]
+		'B'		: 5.e2, # mol/m^3_bulk
 		'D_i'	: 1.e-20, # mol/m^3_bulk
 		'chubbite_vf' : 1-pars['por'], # [m^3/m^3_bulk]  #?????
 }
@@ -76,9 +76,9 @@ results_ode['chubbite_vf'] = u[:,6]
 # ------------------------------------------------------------------------------
 # Compare with pflotran simulation
 # ------------------------------------------------------------------------------
-simbasename = "microbe_growth"
+simbasename = "microbe_biocide"
 observation_filename = [simbasename + '-obs-0.tec']
-variable_list = ['Total molasses [M]', 'biomass [mol/m^3]']
+variable_list = ['biomass [mol/m^3]', 'biocide [M]']
 observation_list = ['obs1']
 results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
@@ -89,24 +89,24 @@ results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=o
 fig = plt.figure(figsize=[10,5])
 ax = fig.add_subplot(1, 2, 1)
 xlims = [0,10]
-skipfactor = 1750 # skip data in ode results
+skipfactor = 30 # skip data in ode results
 fontsize = 9
 
 pflo_plotvars = [[variable_list[0]], observation_list]
-pflo_plotvars = list(it.product(*pflo_plotvars))
-ode_plotvars = ['D_m']
-legend_list = ['D_m - PFLOTRAN', 'D_m - odespy']
-
-pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
-
-# Second plot
-ax = fig.add_subplot(1, 2, 2)
-pflo_plotvars = [[variable_list[1]], observation_list]
 pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['B']
 legend_list = ['B - PFLOTRAN', 'B - odespy']
 
 pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
+
+# Second plot
+ax = fig.add_subplot(1, 2, 2)
+pflo_plotvars = [[variable_list[1]], observation_list]
+pflo_plotvars = list(it.product(*pflo_plotvars))
+ode_plotvars = ['X']
+legend_list = ['X - PFLOTRAN', 'X - odespy']
+
+pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 
 plt.tight_layout()
 plt.savefig(simbasename + '.png')
