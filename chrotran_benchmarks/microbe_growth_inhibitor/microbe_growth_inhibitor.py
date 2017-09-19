@@ -1,6 +1,6 @@
-# Id: abiotic.py, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Id: microbe_growth_inhibitor.py, Mon 28 Aug 2017 05:03:53 PM MDT #
 # Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
-# Description: Benchmark for abiotic reactions with mobile-immobile exchange.
+# Description: Benchmark for biomass growth in the presence of inhibitor.
 #------------------------------------------------------------------------------
 import sys
 import os
@@ -122,5 +122,6 @@ lns.append(ln)
 legend_list.append('B - PFLOTRAN (no inhibitor)')
 ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
 
-plt.tight_layout()
+plt.suptitle("microbe_growth_inhibitor benchmark")
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig(simbasename + '.png')

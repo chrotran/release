@@ -1,4 +1,4 @@
-# Id: abiotic.py, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Id: abiotic_mimt.py, Mon 28 Aug 2017 05:03:53 PM MDT #
 # Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
 # Description: Benchmark for abiotic reactions with mobile-immobile exchange.
 #------------------------------------------------------------------------------
@@ -108,5 +108,6 @@ legend_list = ['D_i - PFLOTRAN','D_i - odespy']
 
 pf.plot_benchmarks(ax2, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", xlims=xlims, skipfactor=skipfactor, fontsize=fontsize)
 
-plt.tight_layout()
+plt.suptitle("abiotic_mimt benchmark")
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig(simbasename + '.png')

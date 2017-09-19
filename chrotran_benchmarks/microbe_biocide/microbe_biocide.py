@@ -1,6 +1,6 @@
-# Id: abiotic.py, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Id: microbe_biocide.py, Mon 28 Aug 2017 05:03:53 PM MDT #
 # Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
-# Description: Benchmark for abiotic reactions with mobile-immobile exchange.
+# Description: Benchmark for biomass destruction by biocide.
 #------------------------------------------------------------------------------
 import sys
 import os
@@ -108,5 +108,6 @@ legend_list = ['X - PFLOTRAN', 'X - odespy']
 
 pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 
-plt.tight_layout()
+plt.suptitle("microbe_biocide benchmark")
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig(simbasename + '.png')

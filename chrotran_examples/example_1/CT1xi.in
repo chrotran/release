@@ -78,7 +78,6 @@ CHEMISTRY
   UPDATE_POROSITY
   MINIMUM_POROSITY 1.d-4
   UPDATE_PERMEABILITY
-  UPDATE_MINERAL_SURFACE_AREA
   DATABASE ../chem.dat
   OUTPUT
     ALL
@@ -93,24 +92,11 @@ TIMESTEPPER FLOW
   TS_ACCELERATION 8
 END
 
-NEWTON_SOLVER FLOW
-END
-
-LINEAR_SOLVER FLOW
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
-END
-
 NEWTON_SOLVER TRANSPORT
   STOL 1.d-30
   ITOL 1.d-8
   RTOL 1.d-8
   MAXIT 25
-END
-
-LINEAR_SOLVER TRANSPORT
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
 END
 
 #=========================== discretization ===================================
@@ -131,11 +117,6 @@ END
 #=========================== fluid properties =================================
 FLUID_PROPERTY
   DIFFUSION_COEFFICIENT 1.d-9
-END
-
-#=========================== solver options ===================================
-TIMESTEPPER FLOW
-#  INITIALIZE_TO_STEADY_STATE
 END
 
 #=========================== material properties ==============================
@@ -211,40 +192,10 @@ REGION east
   /
 END
 
-REGION north
-  FACE NORTH
-  COORDINATES
-    0.d0 100.d0 0.d0
-    100.d0 100.d0 30.d0
-  /
-END
-
-REGION south
-  FACE SOUTH
-  COORDINATES
-    0.d0 0.d0 0.d0
-    100.d0 0.d0 30.d0
-  /
-END
-
 REGION well_injection
   COORDINATES
     25.d0 50.d0 0.d0
     25.d0 50.d0 30.d0
-  /
-END
-
-REGION obs1
-  COORDINATES
-    70.d0 50.d0 0.d0
-    70.d0 50.d0 30.d0
-  /
-END
-
-REGION obs2
-  COORDINATES
-    30.d0 50.d0 0.d0
-    30.d0 50.d0 30.d0
   /
 END
 
@@ -259,13 +210,6 @@ FLOW_CONDITION initial
     PRESSURE dirichlet
   /
   PRESSURE 9788998.03d0
-END
-
-FLOW_CONDITION no_flow
-  TYPE
-    FLUX neumann
-  /
-  FLUX 0.d0
 END
 
 FLOW_CONDITION east

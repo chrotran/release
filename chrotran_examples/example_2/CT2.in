@@ -1,6 +1,6 @@
-# Id: CT1di.in, Fri 28 Oct 2016 10:45:29 AM MDT #
+# Id: CT2.in, Fri 28 Oct 2016 10:45:29 AM MDT #
 # Created by Hansen,Karra,Pandey LANL
-# Description: YES direct reaction NO inhibitor
+# Description: Example showing bioclogging and unclogging capabilities
 #------------------------------------------------------------------
 
 SIMULATION
@@ -92,24 +92,11 @@ TIMESTEPPER FLOW
   TS_ACCELERATION 8
 END
 
-NEWTON_SOLVER FLOW
-END
-
-LINEAR_SOLVER FLOW
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
-END
-
 NEWTON_SOLVER TRANSPORT
   STOL 1.d-30
   ITOL 1.d-8
   RTOL 1.d-8
   MAXIT 25
-END
-
-LINEAR_SOLVER TRANSPORT
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
 END
 
 #=========================== discretization ===================================
@@ -125,11 +112,6 @@ END
 #=========================== fluid properties =================================
 FLUID_PROPERTY
   DIFFUSION_COEFFICIENT 1.d-9
-END
-
-#=========================== solver options ===================================
-TIMESTEPPER FLOW
-#  INITIALIZE_TO_STEADY_STATE
 END
 
 #=========================== material properties ==============================
@@ -203,22 +185,6 @@ REGION east
   /
 END
 
-REGION north
-  FACE NORTH
-  COORDINATES
-    0.d0 50.d0 0.d0
-    50.d0 50.d0 10.d0
-  /
-END
-
-REGION south
-  FACE SOUTH
-  COORDINATES
-    0.d0 0.d0 0.d0
-    50.d0 0.d0 10.d0
-  /
-END
-
 REGION well_injection
   FACE NORTH
   COORDINATES
@@ -238,13 +204,6 @@ FLOW_CONDITION initial
     PRESSURE dirichlet
   /
   PRESSURE 9788998.03d0
-END
-
-FLOW_CONDITION no_flow
-  TYPE
-    FLUX neumann
-  /
-  FLUX 0.d0
 END
 
 FLOW_CONDITION east

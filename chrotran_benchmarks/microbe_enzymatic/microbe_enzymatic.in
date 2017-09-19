@@ -1,5 +1,7 @@
-#Description: Chrome bio batch experiment
-
+# Id: microbe_enzymatic.in, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
+# Description: Benchmark for chromium reduction by biomass.
+#------------------------------------------------------------------------------
 SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS
@@ -12,7 +14,6 @@ SIMULATION
     /
   /
 END
-
 
 SUBSURFACE
 

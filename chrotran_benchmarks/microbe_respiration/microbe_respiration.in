@@ -1,5 +1,7 @@
-#Description: Chrome bio batch experiment
-
+# Id: microbe_respiration.in, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
+# Description: Benchmark for microbial respiration.
+#------------------------------------------------------------------------------
 SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS

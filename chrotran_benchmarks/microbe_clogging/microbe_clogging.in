@@ -1,8 +1,7 @@
-# Id: CT1di.in, Fri 28 Oct 2016 10:45:29 AM MDT #
-# Created by Hansen,Karra,Pandey LANL
-# Description: YES direct reaction NO inhibitor
-#------------------------------------------------------------------
-
+# Id: microbe_clogging.in, Mon 28 Aug 2017 05:03:53 PM MDT #
+# Created by Sachin Pandey, Scott Hansen, Satish Karra, LANL
+# Description: Benchmark for biomass clogging and unclogging.
+#------------------------------------------------------------------------------
 SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS
@@ -92,24 +91,11 @@ TIMESTEPPER FLOW
   TS_ACCELERATION 8
 END
 
-NEWTON_SOLVER FLOW
-END
-
-LINEAR_SOLVER FLOW
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
-END
-
 NEWTON_SOLVER TRANSPORT
   STOL 1.d-30
   ITOL 1.d-8
   RTOL 1.d-8
   MAXIT 25
-END
-
-LINEAR_SOLVER TRANSPORT
-#  KSP_TYPE PREONLY
-#  PC_TYPE LU
 END
 
 #=========================== discretization ===================================
@@ -274,15 +260,6 @@ END
 CONSTRAINT injectant
   CONCENTRATIONS
     molasses    1.d-2 T
-    ethanol     1.d-20 T
-    biocide     1.d-20 T
-    Cr(VI)      1.d-20 T
-  END
-END
-
-CONSTRAINT injectant_clean
-  CONCENTRATIONS
-    molasses    1.d-20 T
     ethanol     1.d-20 T
     biocide     1.d-20 T
     Cr(VI)      1.d-20 T
