@@ -1,0 +1,74 @@
+# Id: chrotran-dev-notes.txt, Tue 19 Sep 2017 02:44:54 PM MDT pandeys #
+# Created by Sachin Pandey, LANL
+# Description: Notes on how to manage chrotran/release git repo
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# How chrotran repo was created
+#------------------------------------------------------------------------------
+git clone https://bitbucket.org/pflotran/pflotran chrotran
+
+# change repo to chrotran:
+git remote rm origin
+git remote add origin https://github.com/yednap47/chrotran-dev.git
+git push --set-upstream origin master
+
+# add all of the chrotran files:
+# 	chrotran_examples directory
+# 	chrotran_benchmarks directory
+# 	reaction_sandbox_chrotran.F90
+# 	update makefile
+# 	update reaction_sandbox.F90
+
+# build chrotran to make sure everything is working fine
+# make sure you change the proper instances of "pflotran" to "chrotran" in makefile to build and delete chrotran executable!
+make chrotran -j 16 
+./multirun.sh # run examples to makes sure everything is working
+
+make clean
+# update .gitignore file (src/pflotran/chrotran)
+git add . # Add example files after deleting output files
+git commit -m "Reinitialized chrotran-dev for git using the latest version of pflotran-dev."
+git push
+
+# rename branch to dev
+git branch -m master dev
+git push origin :master
+git push --set-upstream origin dev
+
+# create release branch (note this branch will be switched to main branch on github website)
+git checkout -b release
+
+# remove unecessary files, commit, and push
+rm bitbucket-pipelines.yml makefile configure .hgeol .hgignore .travis.yml .gitignore .gitattributes
+rm -r docs hanford regression_tests tpls shortcourse  example_problems database tools .bitbucket-pipeline .travis
+git add -u
+git commit -m "Created release branch
+git push https://github.com/yednap47/release-take2.git release # automatically creates remote branch
+
+#------------------------------------------------------------------------------
+# How to merge pflotran-dev into chrotran dev branch, and chrotran dev into chrotran release
+#------------------------------------------------------------------------------
+# Basically, just use merge (no auto merge)
+git checkout dev
+git pull https://bitbucket.org/pflotran/pflotran.git
+git checkout release
+
+# Don't auto merge
+git merge dev --no-commit --no-ff
+
+# Remove merge conflicts, e.g.
+git reset regression_tests/* # For added files (i.e git st = A)
+rm -r regression_tests/
+git rm -r shortcourse/
+
+# Commit
+git commit -m "Merge branch 'dev' into release."
+
+#------------------------------------------------------------------------------
+# Adding tags
+#------------------------------------------------------------------------------
+git checkout b4dccf5
+git tag v1.0
+git push origin --tags
+# remove temporary branch if necessary
