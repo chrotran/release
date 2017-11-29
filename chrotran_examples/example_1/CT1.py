@@ -32,7 +32,7 @@ for i in np.arange(0,4):
 		results[myvar] = f[keydict[timestep*dt]][myvar].value
 		results[myvar] = results[myvar].reshape(len(xgrid)-1,len(ygrid)-1)
 
-	plt.subplot(2,2,i)
+	plt.subplot(2,2,i+1)
 	plt.pcolor(x, y, np.transpose(results['Total_Cr(VI) [M]'])*MW_Cr*10**6, vmin = 0.0, vmax = 1000)
 	cbar = plt.colorbar(format=majorFormatter)
 	cbar.set_label('Cr(VI) [ppb]', rotation=270,labelpad=20)
@@ -47,5 +47,5 @@ for i in np.arange(0,4):
 		plt.ylabel('y [m]')
 
 plt.tight_layout()
-plt.savefig('example_1_'+str(int(timestep*dt))+'d.png')
+plt.savefig('example_1_'+str(int(timestep*dt))+'d.png',dpi=600)
 plt.close()

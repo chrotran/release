@@ -60,7 +60,7 @@ init = {'C'		: 1.e-20, # [M]
 }
 
 chrotran_sandbox = pf.make_chrotran_sandbox(pars)
-u, t = pf.run_ode(init, pars, sopt, chrotran_sandbox)
+u, t = pf.run_ode_chrotran(init, pars, sopt, chrotran_sandbox)
 
 # L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
 results_ode = {}
@@ -86,7 +86,7 @@ observation_filename = ['microbe_growth_noinhibitor-obs-0.tec']
 results_pflotran_ctrl =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
-# Plotting
+# Plotting/Regression
 # ------------------------------------------------------------------------------
 # First plot
 fig = plt.figure(figsize=[10,5])
@@ -99,6 +99,8 @@ pflo_plotvars = [[variable_list[0]], observation_list]
 pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['D_m']
 legend_list = ['D_m - PFLOTRAN', 'D_m - odespy']
+
+regression_result = pf.calc_regression(ts = 1.0e-2,tol = 1.0e-5,results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, sim=simbasename)
 
 lns = pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 
@@ -114,6 +116,8 @@ pflo_plotvars = [[variable_list[1]], observation_list]
 pflo_plotvars = list(it.product(*pflo_plotvars))
 ode_plotvars = ['B']
 legend_list = ['B - PFLOTRAN', 'B - odespy']
+
+regression_result = pf.calc_regression(ts = 1.0e-2,tol = 1.0e-5,results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, sim=simbasename)
 
 lns = pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [mol/m^3_bulk]", skipfactor=skipfactor, fontsize=fontsize, xlims=xlims)
 

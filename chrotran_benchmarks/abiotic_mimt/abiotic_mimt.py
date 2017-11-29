@@ -60,7 +60,7 @@ init = {'C'		: 1.e-2, # [M]
 }
 
 chrotran_sandbox = pf.make_chrotran_sandbox(pars)
-u, t = pf.run_ode(init, pars, sopt, chrotran_sandbox)
+u, t = pf.run_ode_chrotran(init, pars, sopt, chrotran_sandbox)
 
 # L_water = pars['v_cell'] * pars['por'] * pars['s'] * 1.e3 # [L]
 results_ode = {}
@@ -83,7 +83,7 @@ observation_list = ['obs1']
 results_pflotran =  pf.getobsdata(variable_list=variable_list,observation_list=observation_list,observation_filenames=observation_filename)
 
 # ------------------------------------------------------------------------------
-# Plotting
+# Plotting/Regression
 # ------------------------------------------------------------------------------
 # First plot
 fig = plt.figure(figsize=[10,5])
@@ -99,6 +99,8 @@ legend_list = ['D_m - PFLOTRAN','Cr(VI) - PFLOTRAN', 'D_m - odespy','Cr(VI) - od
 
 pf.plot_benchmarks(ax, results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, legend_list=legend_list, xlabel="Time [hr]", ylabel="Concentration [M]", xlims=xlims, skipfactor=skipfactor, fontsize=fontsize)
 
+regression_result = pf.calc_regression(ts = 1.0e-2,tol = 1.0e-5,results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, sim=simbasename)
+
 # Second plot
 ax2 = fig.add_subplot(1, 2, 2)
 pflo_plotvars = [[variable_list[2]], observation_list]
@@ -111,3 +113,5 @@ pf.plot_benchmarks(ax2, results_ode=results_ode, results_pflotran=results_pflotr
 plt.suptitle("abiotic_mimt benchmark")
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig(simbasename + '.png')
+
+regression_result = pf.calc_regression(ts = 1.0e-2,tol = 1.0e-4,results_ode=results_ode, results_pflotran=results_pflotran, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, sim=simbasename)

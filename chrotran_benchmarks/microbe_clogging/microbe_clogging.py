@@ -6,40 +6,33 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 from numpy import ma
-import h5py
+import sys
+sys.path.append('../python')
+import pyfun as pf
+import itertools as it
 
-filename = 'microbe_clogging.h5'
-f = h5py.File(filename, 'r')
-
-timesteps = range(1,200)
-dt = 1.0
+timesteps = range(0,50)
+dt = 4.0
 myvars = ['biomass [mol_m^3]','Permeability_X [m^2]','Porosity']
-majorFormatter = plt.matplotlib.ticker.FormatStrFormatter("%0.1e")
+simbasename = "microbe_clogging"
 
-keys = f.keys()
-timekeys = [key for key in keys if 'Time:' in key]
-times = [float(timekey.split('Time:  ')[1].split(' d')[0]) for timekey in timekeys]
-st = sorted(times)
-keydict = dict(zip(times,timekeys))
+# New simulation
+filename = simbasename + '.h5'
+results_new = pf.readh5_1d(filename=filename,timesteps=timesteps,dt=dt,myvars=myvars)
 
-# get coordinates
-xgrid = f['Coordinates']['X [m]'].value
-ygrid = f['Coordinates']['Y [m]'].value
-# x, y = np.meshgrid(xgrid, ygrid)
-x, y = np.mgrid[min(xgrid):max(xgrid):xgrid[1]-xgrid[0], min(ygrid):max(ygrid):ygrid[1]-ygrid[0]]
-
-results = dict()
-for myvar in myvars:
-    results[myvar] = []
-    for timestep in timesteps:
-        # get values at the well (center node)
-        results[myvar].append(f[keydict[timestep*dt]][myvar].value[1][1][0])
+# Old simulation
+filename = simbasename + '_gold.h5'
+results_gold = pf.readh5_1d(filename=filename,timesteps=timesteps,dt=dt,myvars=myvars)
 
 f,ax = plt.subplots(1,3,figsize=(10,4))
+mycmap=plt.cm.jet(np.linspace(0,1,5))
+majorFormatter = plt.matplotlib.ticker.FormatStrFormatter("%0.1e")
+skipfactor = 3
 for i in range(0,3):
-    ax[i].plot([timestep*dt for timestep in timesteps],results[myvars[i]])
-    ax[i].set_ylabel(myvars[i])
-    ax[i].set_xlabel('Time [day]')
+	ax[i].plot([timestep*dt for timestep in timesteps],results_new[myvars[i]],c=mycmap[0])
+	ax[i].scatter([timestep*dt for timestep in timesteps][0:-1:skipfactor],results_gold[myvars[i]][0:-1:skipfactor],c=mycmap[0])
+	ax[i].set_ylabel(myvars[i])
+	ax[i].set_xlabel('Time [day]')
 
 ax[0].yaxis.set_major_formatter(majorFormatter)
 ax[1].yaxis.set_major_formatter(majorFormatter)
@@ -47,3 +40,18 @@ ax[1].yaxis.set_major_formatter(majorFormatter)
 plt.suptitle("microbe_clogging benchmark")
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 f.savefig('microbe_clogging.png')
+
+# ------------------------------------------------------------------------------
+# Calculate regression test error
+# ------------------------------------------------------------------------------
+# For regression test, use gold standard file instead of python ODE
+
+results_new['time']=[timestep*dt for timestep in timesteps]
+results_gold['time']=[timestep*dt for timestep in timesteps]
+results_new['biomass [mol_m^3] '] = results_new['biomass [mol_m^3]']
+observation_list = ['']
+variable_list = ['biomass [mol_m^3]']
+pflo_plotvars = [[variable_list[0]], observation_list]
+pflo_plotvars = list(it.product(*pflo_plotvars))
+ode_plotvars  = ['biomass [mol_m^3]']
+regression_result = pf.calc_regression(ts = 20.0,tol = 1.0e-9,results_ode=results_gold, results_pflotran=results_new, ode_plotvars=ode_plotvars, pflo_plotvars=pflo_plotvars, sim=simbasename)

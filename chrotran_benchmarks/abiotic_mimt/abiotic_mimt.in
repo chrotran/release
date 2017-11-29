@@ -78,7 +78,7 @@ CHEMISTRY
 #  MINIMUM_POROSITY 1.d-4
 #  UPDATE_PERMEABILITY
 #  UPDATE_MINERAL_SURFACE_AREA
-  DATABASE ../../chrotran_examples/chem.dat
+  DATABASE ../../database/chromium.dat
   OUTPUT
     ALL
     FREE_ION
@@ -144,7 +144,7 @@ END
 
 #=========================== output options ===================================
 OUTPUT
-  PERIODIC_OBSERVATION TIMESTEP 1
+  PERIODIC_OBSERVATION TIME 0.001 h
   PRINT_COLUMN_IDS
 END
 

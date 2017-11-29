@@ -42,5 +42,5 @@ ax.set_ylim(min(ygrid),max(ygrid))
 ax.set_xlabel('x [m]')
 ax.set_ylabel('y [m]')
  
-f.savefig('example_2_'+str(int(timestep*dt))+'d.png')
+f.savefig('example_2_'+str(int(timestep*dt))+'d.png',dpi=600)
 plt.close()
