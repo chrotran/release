@@ -102,7 +102,8 @@ subroutine PMFlash2Read(this,input)
     call StringToUpper(word)
 
     found = PETSC_FALSE
-    call PMSubsurfaceFlowReadSelectCase(this,input,word,found,option)
+    call PMSubsurfaceFlowReadSelectCase(this,input,word,found, &
+                                        error_string,option)
     if (found) cycle
     
     select case(trim(word))
@@ -174,7 +175,8 @@ end subroutine PMFlash2PostSolve
 ! ************************************************************************** !
 
 subroutine PMFlash2UpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
-                                    num_newton_iterations,tfac)
+                                  num_newton_iterations,tfac, &
+                                  time_step_max_growth_factor)
   ! 
   ! Author: Gautam Bisht
   ! Date: 11/27/13
@@ -189,6 +191,7 @@ subroutine PMFlash2UpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   PetscInt :: iacceleration
   PetscInt :: num_newton_iterations
   PetscReal :: tfac(:)
+  PetscReal :: time_step_max_growth_factor
   
   PetscReal :: fac
   PetscReal :: ut
@@ -225,7 +228,7 @@ subroutine PMFlash2UpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
     dtt = min(dt_tfac,dt_p)
   endif
   
-  if (dtt > 2.d0 * dt) dtt = 2.d0 * dt
+  dtt = min(time_step_max_growth_factor*dt,dtt)
   if (dtt > dt_max) dtt = dt_max
   dtt = max(dtt,dt_min)
 

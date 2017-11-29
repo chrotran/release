@@ -28,6 +28,7 @@ SIMULATION
         MAX_PRESSURE_CHANGE 1.d20
         MAX_SATURATION_CHANGE 1.d20
         GAS_COMPONENT_FORMULA_WEIGHT 2.01588D0 ! H2 kg/kmol
+        NO_GAS_GENERATION
       /
     /
   /
@@ -124,7 +125,7 @@ END
 
 ! Creep Closure
 CREEP_CLOSURE_TABLE  creep001
-  FILENAME pflotran_closure.dat
+  FILENAME ../../pflotran_closure.dat
 END
 
 !=========================== regions ==========================================

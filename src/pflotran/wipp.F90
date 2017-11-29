@@ -282,9 +282,12 @@ subroutine FracturePoroEvaluate(auxvar,pressure,compressed_porosity, &
   endif
 
 
-       ! convert bulk compressibility to pore compressibility
-  Ci = auxvar%soil_properties(soil_compressibility_index) / &
-       auxvar%porosity_base
+  Ci = auxvar%soil_properties(soil_compressibility_index)
+  if (associated(MaterialCompressSoilPtr,MaterialCompressSoilBRAGFLO)) then
+    ! convert bulk compressibility to pore compressibility
+    Ci = auxvar%soil_properties(soil_compressibility_index) / &
+         auxvar%porosity_base
+  endif
 !  P0 = auxvar%soil_properties(soil_reference_pressure_index)
   P0 = auxvar%fracture%initial_pressure
   Pi = auxvar%fracture%properties(frac_init_pres_index) + P0
@@ -296,13 +299,6 @@ subroutine FracturePoroEvaluate(auxvar,pressure,compressed_porosity, &
     compressed_porosity = phi0
     return
   endif
-
-  if (.not.associated(MaterialCompressSoilPtr, &
-                      MaterialCompressSoilBRAGFLO)) then
-    option%io_buffer = 'WIPP Fracture Function must be used with ' // &
-      'BRAGFLO soil compressibility function.'
-    call printErrMsg(option)
-  endif
   
   if (pressure < Pi) then
 !    call MaterialCompressSoil(auxvar,pressure, compressed_porosity, &
@@ -313,6 +309,7 @@ subroutine FracturePoroEvaluate(auxvar,pressure,compressed_porosity, &
       2.d0/(Pa-Pi)*log(phia/phi0)
     compressed_porosity = phi0 * exp(Ci*(pressure-P0) + &
       ((Ca-Ci)*(pressure-Pi)**2.d0)/(2.d0*(Pa-Pi)))
+    compressed_porosity=min(compressed_porosity, phia)
     !mathematica solution
     dcompressed_porosity_dp = exp(Ci*(pressure-P0) + &
       ((Ca-Ci)*(pressure-Pi)**2.d0) / (2.d0*(Pa-Pi))) * &
@@ -363,8 +360,12 @@ subroutine FracturePermScale(auxvar,liquid_pressure,effective_porosity, &
     return
   endif
 
-  Ci = auxvar%soil_properties(soil_compressibility_index) / &
-       auxvar%porosity_base
+  Ci = auxvar%soil_properties(soil_compressibility_index)
+  if (associated(MaterialCompressSoilPtr,MaterialCompressSoilBRAGFLO)) then
+    ! convert bulk compressibility to pore compressibility
+    Ci = auxvar%soil_properties(soil_compressibility_index) / &
+         auxvar%porosity_base
+  endif
   P0 = auxvar%fracture%initial_pressure
   Pi = auxvar%fracture%properties(frac_init_pres_index) + P0
 
@@ -432,6 +433,10 @@ module Creep_Closure_module
     character(len=MAXWORDLENGTH) :: name
     PetscInt :: num_times
     PetscInt :: num_values_per_time
+    PetscReal :: shutdown_pressure
+    PetscReal :: time_closeoff
+    PetscReal :: time_datamax
+    PetscReal :: porosity_minimum
     class(lookup_table_general_type), pointer :: lookup_table
     
     class(creep_closure_type), pointer :: next
@@ -487,6 +492,10 @@ function CreepClosureCreate()
   CreepClosureCreate%name = ''
   CreepClosureCreate%num_times = UNINITIALIZED_INTEGER
   CreepClosureCreate%num_values_per_time = UNINITIALIZED_INTEGER
+  CreepClosureCreate%shutdown_pressure = 5.d7 ! set to BRAGFLO default
+  CreepClosureCreate%porosity_minimum = 1.d-2 
+  CreepClosureCreate%time_closeoff = 1.d20 ! s
+  CreepClosureCreate%time_datamax =  1.d20 ! s
   nullify(CreepClosureCreate%lookup_table)
   nullify(CreepClosureCreate%next)
   
@@ -537,7 +546,12 @@ subroutine CreepClosureRead(this,input,option)
       case('FILENAME') 
         call InputReadNChars(input,option,filename,MAXSTRINGLENGTH,PETSC_TRUE)
         call InputErrorMsg(input,option,'FILENAME',error_string)
-      
+      case('SHUTDOWN_PRESSURE')
+        call InputReadDouble(input,option,this%shutdown_pressure)
+        call InputErrorMsg(input,option,'shutdown pressure',error_string)
+      case('TIME_CLOSEOFF')
+        call InputReadDouble(input,option,this%time_closeoff)
+        call InputErrorMsg(input,option,'time closeoff',error_string)
      case default
         call InputKeywordUnrecognized(keyword,'CREEP_CLOSURE',option)
     end select
@@ -626,7 +640,11 @@ subroutine CreepClosureRead(this,input,option)
                        'NUM_VALUES_PER_TIME.'
     call printErrMsg(option)
   endif
-  
+
+  ! set limits
+  this%time_datamax = maxval(this%lookup_table%axis1%values)
+  this%porosity_minimum = minval(this%lookup_table%data)
+
 end subroutine CreepClosureRead
 
 

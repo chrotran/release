@@ -24,6 +24,7 @@ SIMULATION
         MAX_PRESSURE_CHANGE 1.d20
         MAX_SATURATION_CHANGE 1.d20
         GAS_COMPONENT_FORMULA_WEIGHT 2.01588D0 ! H2 kg/kmol
+        NO_GAS_GENERATION
       /
     /
   /
@@ -36,7 +37,11 @@ SUBSURFACE
 
 !=========================== regression =======================================
 REGRESSION
-  CELLS_PER_PROCESS 2
+  CELLS
+    1
+    3
+    6
+  /
 END
 
 

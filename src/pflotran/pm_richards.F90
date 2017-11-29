@@ -100,7 +100,8 @@ subroutine PMRichardsRead(this,input)
     call StringToUpper(word)
 
     found = PETSC_FALSE
-    call PMSubsurfaceFlowReadSelectCase(this,input,word,found,option)
+    call PMSubsurfaceFlowReadSelectCase(this,input,word,found, &
+                                        error_string,option)
     if (found) cycle
     
     select case(trim(word))
@@ -184,7 +185,8 @@ end subroutine PMRichardsPostSolve
 ! ************************************************************************** !
 
 subroutine PMRichardsUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
-                                    num_newton_iterations,tfac)
+                                    num_newton_iterations,tfac, &
+                                    time_step_max_growth_factor)
   ! 
   ! Author: Glenn Hammond
   ! Date: 03/14/13
@@ -199,6 +201,7 @@ subroutine PMRichardsUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   PetscInt :: iacceleration
   PetscInt :: num_newton_iterations
   PetscReal :: tfac(:)
+  PetscReal :: time_step_max_growth_factor
   
   PetscReal :: fac
   PetscReal :: ut
@@ -229,7 +232,7 @@ subroutine PMRichardsUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
     dtt = min(dt_tfac,dt_p)
   endif
   
-  if (dtt > 2.d0 * dt) dtt = 2.d0 * dt
+  dtt = min(time_step_max_growth_factor*dt,dtt)
   if (dtt > dt_max) dtt = dt_max
   ! geh: There used to be code here that cut the time step if it is too
   !      large relative to the simulation time.  This has been removed.
@@ -518,6 +521,7 @@ subroutine PMRichardsTimeCut(this)
   
   call PMSubsurfaceFlowTimeCut(this)
   call RichardsTimeCut(this%realization)
+  call PMSubsurfaceFlowTimeCutPostInit(this)
 
 end subroutine PMRichardsTimeCut
 

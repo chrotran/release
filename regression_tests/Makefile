@@ -73,8 +73,11 @@ STANDARD_CFG = \
 	toil_ims/toil_ims.cfg \
 	towg/towg.cfg \
 	ufd/ufd.cfg \
-	wipp/nuts/nuts.cfg \
-	wipp/bragflo/wipp_flow/wipp_flow.cfg
+	wipp/wipp_flow/condition/condition.cfg \
+	wipp/wipp_flow/input_format/input_format.cfg \
+	wipp/wipp_flow/gas_generation/gas_generation.cfg \
+	wipp/nuts/nuts.cfg
+#	wipp/bragflo/wipp_flow/wipp_flow.cfg \
 
 ifneq ($(strip $(PARMETIS_LIB)),)
 	STANDARD_CFG += \
@@ -82,6 +85,7 @@ ifneq ($(strip $(PARMETIS_LIB)),)
 		geomech/uniaxial_strain/uniaxial_strain.cfg \
 	        geomech/uniaxial_loading/uniaxial_loading.cfg \
         	geomech/uniaxial_loading_biot/uniaxial_loading_biot.cfg \
+        	geomech/terzaghi/terzaghi.cfg \
 	        surfaceflow/surface_flow_only/surface_only.cfg \
 		surfaceflow/surface_th/surface_th.cfg \
 		surfaceflow/inlinesurface/inlinesurface.cfg
@@ -108,7 +112,8 @@ GEOCHEMISTRY_CFG = \
 GEOMECHANICS_CFG = \
 	geomech/uniaxial_strain/uniaxial_strain.cfg \
 	geomech/uniaxial_loading/uniaxial_loading.cfg \
-	geomech/uniaxial_loading_biot/uniaxial_loading_biot.cfg
+	geomech/uniaxial_loading_biot/uniaxial_loading_biot.cfg \
+	geomech/terzaghi/terzaghi.cfg
 
 FLOW_CFG = \
 	default/543/543.cfg \
@@ -122,8 +127,8 @@ FLOW_CFG = \
         toil_ims/toil_ims.cfg \
 	towg/towg.cfg \
 	shortcourse/1D_variably_saturated_flow/vsat_flow.cfg \
-	shortcourse/copper_leaching/cu_leaching.cfg \
-	wipp/bragflo/wipp_flow/wipp_flow.cfg
+	shortcourse/copper_leaching/cu_leaching.cfg
+#	wipp/bragflo/wipp_flow/wipp_flow.cfg
 
 TRANSPORT_CFG = \
 	default/543/543.cfg \
@@ -147,7 +152,6 @@ NOHDF5_CFG = \
 	default/materials/soil_compressibility/soil_compressibility.cfg \
 	wipp/nuts/nuts.cfg \
 	default/multicontinuum/multicontinuum.cfg \
-	wipp/bragflo/wipp_flow/wipp_flow.cfg \
 	ufd/ufd.cfg \
 	hydrogeophysics/hydrogeophysics.cfg \
 	ascem/1d/1d-calcite/1d-calcite.cfg \
@@ -161,10 +165,12 @@ NOHDF5_CFG = \
 	default/eos/eos.cfg \
 	default/regions/regions.cfg \
 	shortcourse/1D_variably_saturated_flow/vsat_flow.cfg
+#	wipp/bragflo/wipp_flow/wipp_flow.cfg \
 
 WIPP_CFG = \
-	wipp/bragflo/wipp_flow/wipp_flow.cfg \
-	wipp/nuts/nuts.cfg
+	wipp/nuts/nuts.cfg \
+	wipp/wipp_flow/gas_generation/gas_generation.cfg \
+#	wipp/bragflo/wipp_flow/wipp_flow.cfg \
 
 
 test : standard
@@ -290,6 +296,8 @@ clean-tests :
 	-rm -f wipp/bragflo/wipp_flow/gas_generation_2d.h5
 	-rm -f wipp/bragflo/wipp_flow/gas_generation_one_cell.h5
 	-rm -f wipp/bragflo/wipp_flow/*.pnl
+	-rm -f wipp/wipp_flow/gas_generation/*.pnl 
+	-rm -f wipp/wipp_flow/gas_generation/*.h5
 	-rm -f default/multicontinuum/0D_heat_MPH-int.dat
 	-rm -f default/multicontinuum/0D_heat_TH-int.dat
 	-rm -f default/543/543_hanford_srfcplx_base*.h5

@@ -73,7 +73,8 @@ end subroutine OutputInit
 
 ! ************************************************************************** !
 
-subroutine OutputFileRead(realization,output_option,waypoint_list,block_name)
+subroutine OutputFileRead(input,realization,output_option, &
+                          waypoint_list,block_name)
   ! 
   ! Reads the *_FILE block within the OUTPUT block.
   ! 
@@ -95,12 +96,12 @@ subroutine OutputFileRead(realization,output_option,waypoint_list,block_name)
 
   implicit none
 
+  type(input_type), pointer :: input
   class(realization_subsurface_type), pointer :: realization
   type(output_option_type), pointer :: output_option
   type(waypoint_list_type), pointer :: waypoint_list
   character(len=*) :: block_name
   
-  type(input_type), pointer :: input
   type(option_type), pointer :: option
   type(patch_type), pointer :: patch
   type(grid_type), pointer :: grid
@@ -122,7 +123,6 @@ subroutine OutputFileRead(realization,output_option,waypoint_list,block_name)
   PetscBool :: aveg_mass_flowrate, aveg_energy_flowrate
 
   option => realization%option
-  input => realization%input
   patch => realization%patch
   if (associated(patch)) grid => patch%grid
 
@@ -973,6 +973,24 @@ subroutine OutputVariableRead(input,option,output_variable_list)
         call OutputVariableAddToList(output_variable_list,name, &
                                      OUTPUT_GENERIC,units, &
                                      PERMEABILITY_Z)
+      case ('GAS_PERMEABILITY','GAS_PERMEABILITY_X')
+        units = 'm^2'
+        name = 'Gas Permeability X'
+        call OutputVariableAddToList(output_variable_list,name, &
+                                     OUTPUT_GENERIC,units, &
+                                     GAS_PERMEABILITY)
+      case ('GAS_PERMEABILITY_Y')
+        units = 'm^2'
+        name = 'Gas Permeability Y'
+        call OutputVariableAddToList(output_variable_list,name, &
+                                     OUTPUT_GENERIC,units, &
+                                     GAS_PERMEABILITY_Y)
+      case ('GAS_PERMEABILITY_Z')
+        units = 'm^2'
+        name = 'Gas Permeability Z'
+        call OutputVariableAddToList(output_variable_list,name, &
+                                     OUTPUT_GENERIC,units, &
+                                     GAS_PERMEABILITY_Z)
       case ('SOIL_COMPRESSIBILITY')
         units = ''
         name = 'Compressibility'
@@ -1032,6 +1050,10 @@ subroutine OutputVariableRead(input,option,output_variable_list)
         output_variable%plot_only = PETSC_TRUE ! toggle output off for observation
         output_variable%iformat = 1 ! integer
         call OutputVariableAddToList(output_variable_list,output_variable)
+      case('NO_FLOW_VARIABLES')
+        output_variable_list%flow_vars = PETSC_FALSE
+      case('NO_ENERGY_VARIABLES')
+        output_variable_list%energy_vars = PETSC_FALSE
       case default
         call InputKeywordUnrecognized(word,'VARIABLES',option)
     end select
