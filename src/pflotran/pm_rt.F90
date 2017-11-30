@@ -48,6 +48,7 @@ module PM_RT_class
     procedure, public :: AcceptSolution => PMRTAcceptSolution
     procedure, public :: CheckUpdatePre => PMRTCheckUpdatePre
     procedure, public :: CheckUpdatePost => PMRTCheckUpdatePost
+    procedure, public :: CheckConvergence => PMRTCheckConvergence
     procedure, public :: TimeCut => PMRTTimeCut
     procedure, public :: UpdateSolution => PMRTUpdateSolution1
     procedure, public :: UpdateAuxVars => PMRTUpdateAuxVars
@@ -576,7 +577,8 @@ end function PMRTAcceptSolution
 ! ************************************************************************** !
 
 subroutine PMRTUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
-                              num_newton_iterations,tfac)
+                              num_newton_iterations,tfac, &
+                              time_step_max_growth_factor)
   ! 
   ! Author: Glenn Hammond
   ! Date: 03/14/13
@@ -590,6 +592,7 @@ subroutine PMRTUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   PetscInt :: iacceleration
   PetscInt :: num_newton_iterations
   PetscReal :: tfac(:)
+  PetscReal :: time_step_max_growth_factor
   
   PetscReal :: dtt, uvf, dt_vf, dt_tfac, fac
   PetscInt :: ifac
@@ -634,7 +637,7 @@ subroutine PMRTUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
     endif
   endif
 
-  if (dtt > 2.d0 * dt) dtt = 2.d0 * dt
+  dtt = min(time_step_max_growth_factor*dt,dtt)
   if (dtt > dt_max) dtt = dt_max
   ! geh: see comment above under flow stepper
   dtt = max(dtt,dt_min)
@@ -952,6 +955,32 @@ subroutine PMRTCheckUpdatePost(this,line_search,X0,dX,X1,dX_changed, &
   endif
 
 end subroutine PMRTCheckUpdatePost
+
+! ************************************************************************** !
+
+subroutine PMRTCheckConvergence(this,snes,it,xnorm,unorm,fnorm,reason,ierr)
+  !
+  ! Author: Glenn Hammond
+  ! Date: 11/15/17
+  ! 
+  use Convergence_module
+
+  implicit none
+
+  class(pm_rt_type) :: this
+  SNES :: snes
+  PetscInt :: it
+  PetscReal :: xnorm
+  PetscReal :: unorm
+  PetscReal :: fnorm
+  SNESConvergedReason :: reason
+  PetscErrorCode :: ierr
+
+  call ConvergenceTest(snes,it,xnorm,unorm,fnorm,reason, &
+                       this%realization%patch%grid, &
+                       this%option,this%solver,ierr)
+
+end subroutine PMRTCheckConvergence
 
 ! ************************************************************************** !
 

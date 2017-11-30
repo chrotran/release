@@ -87,7 +87,7 @@ function PMTOWGCreate(miscibility_model,option)
   allocate(towg_pm)
 
   select case(trim(miscibility_model))
-    case('TOWG_IMMISCIBLE','TODD_LONGOSTAFF','TOWG_MISCIBLE')
+    case('TOWG_IMMISCIBLE','TODD_LONGSTAFF','TOWG_MISCIBLE')
       allocate(towg_pm%max_change_ivar(4))
       towg_pm%max_change_ivar = [OIL_PRESSURE, OIL_SATURATION, &
                                  GAS_SATURATION,TEMPERATURE]
@@ -132,7 +132,7 @@ function PMTOWGCreate(miscibility_model,option)
       towg_miscibility_model = TOWG_IMMISCIBLE
       towg_energy_dof = TOWG_3CMPS_ENERGY_DOF
       towg_energy_eq_idx = TOWG_3CMPS_ENERGY_EQ_IDX
-    case('TODD_LONGOSTAFF','TOWG_MISCIBLE')
+    case('TODD_LONGSTAFF','TOWG_MISCIBLE')
       towg_miscibility_model = TOWG_TODD_LONGSTAFF
       towg_energy_dof = TOWG_3CMPS_ENERGY_DOF
       towg_energy_eq_idx = TOWG_3CMPS_ENERGY_EQ_IDX
@@ -215,27 +215,14 @@ subroutine PMTOWGRead(this,input)
     call StringToUpper(keyword)
     
     found = PETSC_FALSE
-    call PMSubsurfaceFlowReadSelectCase(this,input,keyword,found,option)    
+    call PMSubsurfaceFlowReadSelectCase(this,input,keyword,found, &
+                                        error_string,option)    
     if (found) cycle
     
     select case(trim(keyword))
-      !case('MISCIBILITY_MODEL')
-      !  ! read a word, add a new select case, and detect the case
-      !  call InputReadWord(input,option,word,PETSC_TRUE)
-      !  call InputErrorMsg(input,option,'MODEL type','MISCIBILITY_MODEL')  
-      !  call StringToUpper(word)
-      !  select case(trim(word)) 
-      !    case('IMMISICIBLE')
-      !      towg_miscibility_model = TOWG_IMMISCIBLE
-      !    case('TODD_LONGOSTAFF','MISCIBLE')
-      !      towg_miscibility_model = TOWG_TODD_LONGSTAFF
-      !    case('BLACK_OIL')
-      !      towg_miscibility_model = TOWG_BLACK_OIL
-      !    case('SOLVENT_TL')
-      !      towg_miscibility_model = TOWG_SOLVENT_TL
-      !    case default
-      !      call InputKeywordUnrecognized(keyword,'MISCIBILITY_MODEL',option)
-      !  end select 
+      case('TL_OMEGA')
+        call InputReadDouble(input,option,val_tl_omega)
+        call InputDefaultMsg(input,option,'towg tl_omega')
       case('ITOL_SCALED_RESIDUAL')
         call InputReadDouble(input,option,this%itol_scaled_res)
         call InputDefaultMsg(input,option,'towg itol_scaled_res')
@@ -562,7 +549,8 @@ end subroutine PMTOWGMaxChange
 ! ************************************************************************** !
 
 subroutine PMTOWGUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
-                                    num_newton_iterations,tfac)
+                                num_newton_iterations,tfac, &
+                                time_step_max_growth_factor)
   ! 
   ! Author: Paolo Orsini
   ! Date: 12/30/16
@@ -582,6 +570,7 @@ subroutine PMTOWGUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   PetscInt :: iacceleration
   PetscInt :: num_newton_iterations
   PetscReal :: tfac(:)
+  PetscReal :: time_step_max_growth_factor
   
   PetscReal :: fac
   PetscInt :: ifac
@@ -606,6 +595,7 @@ subroutine PMTOWGUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   endif
   ifac = max(min(num_newton_iterations,size(tfac)),1)
   dtt = fac * dt * (1.d0 + umin)
+  dtt = min(time_step_max_growth_factor*dt,dtt)
   dt = min(dtt,tfac(ifac)*dt,dt_max)
   dt = max(dt,dt_min)
 

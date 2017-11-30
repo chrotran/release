@@ -6,6 +6,7 @@ module EOS_module
   use EOS_Water_module
   use EOS_Gas_module
   use EOS_Oil_module 
+  use co2_span_wagner_module
   
   implicit none
 
@@ -54,6 +55,8 @@ subroutine EOSRead(input,option)
   PetscReal :: rks_omegaa = UNINITIALIZED_DOUBLE
   PetscReal :: rks_omegab = UNINITIALIZED_DOUBLE
   PetscBool :: rks_hydrogen = PETSC_TRUE
+  PetscBool :: rks_use_effective_properties = PETSC_TRUE
+  PetscBool :: rks_use_cubic_root_solution = PETSC_FALSE
   PetscReal :: temparray(10)
   PetscReal :: test_t_high, test_t_low, test_p_high, test_p_low
   PetscInt :: test_n_temp, test_n_pres
@@ -98,6 +101,16 @@ subroutine EOSRead(input,option)
                 call InputReadDouble(input,option,temparray(3))
                 call InputErrorMsg(input,option,'WATER_COMPRESSIBILITY', &
                                    'EOS,WATER,DENSITY,EXPONENTIAL')
+              case('LINEAR')
+                call InputReadDouble(input,option,temparray(1))
+                call InputErrorMsg(input,option,'REFERENCE_DENSITY', &
+                                   'EOS,WATER,DENSITY,LINEAR')
+                call InputReadDouble(input,option,temparray(2))
+                call InputErrorMsg(input,option,'REFERENCE_PRESSURE', &
+                                   'EOS,WATER,DENSITY,LINEAR')
+                call InputReadDouble(input,option,temparray(3))
+                call InputErrorMsg(input,option,'WATER_COMPRESSIBILITY', &
+                                   'EOS,WATER,DENSITY,LINEAR')
               case('QUADRATIC')
                 do
                   call InputReadPflotranString(input,option)
@@ -302,6 +315,14 @@ subroutine EOSRead(input,option)
                         rks_hydrogen = PETSC_TRUE
                       case('NON-HYDROGEN')
                         rks_hydrogen = PETSC_FALSE
+                      case('USE_EFFECTIVE_PROPERTIES')
+                        rks_use_effective_properties = PETSC_TRUE
+                      case('DONT_USE_EFFECTIVE_PROPERTIES')
+                        rks_use_effective_properties = PETSC_FALSE
+                      case('USE_CUBIC_ROOT_SOLUTION')
+                        rks_use_cubic_root_solution = PETSC_TRUE
+                      case('DONT_USE_CUBIC_ROOT_SOLUTION')
+                        rks_use_cubic_root_solution = PETSC_FALSE
                       case('CRITICAL_TEMPERATURE','TC')
                         call InputReadDouble(input,option,rks_tc)
                         call InputErrorMsg(input,option, &
@@ -333,7 +354,10 @@ subroutine EOSRead(input,option)
                                 'EOS GAS,RKS',option)
                     end select
                 enddo
-                call EOSGasSetDensityRKS(rks_hydrogen,rks_tc,rks_pc,rks_acen, &
+                call EOSGasSetDensityRKS(rks_hydrogen, &
+                                         rks_use_effective_properties, &
+                                         rks_use_cubic_root_solution, &
+                                         rks_tc,rks_pc,rks_acen, &
                                          rks_omegaa,rks_omegab)
               case('PR_METHANE')
                 call EOSGasSetDensityPRMethane()
@@ -453,6 +477,86 @@ subroutine EOSRead(input,option)
             call InputReadAndConvertUnits(input,tempreal, &
                              'g/mol','EOS,GAS,FORMULA_WEIGHT',option)
             call EOSGasSetFMWConstant(tempreal)
+          case('CO2_SPAN_WAGNER_DB')
+            call EOSGasSetFMWConstant(FMWCO2)
+            temparray = UNINITIALIZED_DOUBLE
+            subkeyword =''
+            do
+              call InputReadPflotranString(input,option)
+              call InputReadStringErrorMsg(input,option, &
+                                           'EOS GAS,CO2_SPAN_WAGNER_DB')
+              if (InputCheckExit(input,option)) exit
+              if (InputError(input)) exit
+              call InputReadWord(input,option,word,PETSC_TRUE)
+              call InputErrorMsg(input,option,'keyword', &
+                                       'EOS GAS, CO2_SPANWAGNER_DB')
+              select case(trim(word))
+                case('PRESSURE_MIN')
+                  call InputReadDouble(input,option,temparray(1))
+                  call InputErrorMsg(input,option, &
+                                    'min pressure - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(1), &
+                       'Pa','EOS,GAS,CO2_SPAN_WAGNER_DB,PRESSURE_MIN',option)
+                case('PRESSURE_MAX')
+                  call InputReadDouble(input,option,temparray(2))
+                  call InputErrorMsg(input,option, &
+                                    'MAX pressure - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(2), &
+                       'Pa','EOS,GAS,CO2_SPAN_WAGNER_DB,PRESSURE_MAX',option)
+                case('PRESSURE_DELTA')
+                  call InputReadDouble(input,option,temparray(3))
+                  call InputErrorMsg(input,option, &
+                                    'Delta pressure - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(3), &
+                      'Pa','EOS,GAS,CO2_SPAN_WAGNER_DB,PRESSURE_DELTA',option)
+                case('TEMPERATURE_MIN')
+                  call InputReadDouble(input,option,temparray(4))
+                  call InputErrorMsg(input,option, &
+                                    'min temperature - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(4), &
+                    'C','EOS,GAS,CO2_SPAN_WAGNER_DB,TEMPERATURE_MIN',option)
+                case('TEMPERATURE_MAX')
+                  call InputReadDouble(input,option,temparray(5))
+                  call InputErrorMsg(input,option, &
+                                    'MAX temperature - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(5), &
+                    'C','EOS,GAS,CO2_SPAN_WAGNER_DB,TEMPERATURE_MAX',option)
+                case('TEMPERATURE_DELTA')
+                  call InputReadDouble(input,option,temparray(6))
+                  call InputErrorMsg(input,option, &
+                                    'Delta temperature - properties look up', &
+                                    'EOS GAS,CO2_SPAN_WAGNER_DB')
+                  call InputReadAndConvertUnits(input,temparray(6), &
+                    'C','EOS,GAS,CO2_SPAN_WAGNER_DB,TEMPERATURE_DELTA',option)
+                case('DATABASE_FILE_NAME')
+                  call InputReadWord(input,option,subkeyword,PETSC_TRUE)
+                  call InputErrorMsg(input,option, &
+                                     'databas file name',&
+                                     'EOS,GAS,FORMULA_WEIGHT')
+                case default
+                  call InputKeywordUnrecognized(subkeyword,&
+                                     'EOS,GAS,CO2_SPAN_WAGNER_DB',option)
+              end select 
+            end do
+            if (option%myrank == option%io_rank) then
+              call co2_span_wagner_db_write(temparray,subkeyword,option)
+            end if
+            call MPI_Barrier(option%mycomm,ierr) 
+            call EOSGasSetEOSDBase(subkeyword,option)
+          case('DATABASE') 
+            call InputReadWord(input,option,word,PETSC_TRUE)
+            call InputErrorMsg(input,option,'EOS,GAS','DATABASE filename')
+            call EOSGasSetEOSDBase(word,option)  
+          case('CO2_DATABASE') 
+            call EOSGasSetFMWConstant(FMWCO2)
+            call InputReadWord(input,option,word,PETSC_TRUE)
+            call InputErrorMsg(input,option,'EOS,GAS','DATABASE filename')
+            call EOSGasSetEOSDBase(word,option)  
           case default
             call InputKeywordUnrecognized(keyword,'EOS,GAS',option)
         end select

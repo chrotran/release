@@ -78,7 +78,7 @@ CHEMISTRY
   UPDATE_POROSITY
   MINIMUM_POROSITY 1.d-4
   UPDATE_PERMEABILITY
-  DATABASE ../chem.dat
+  DATABASE ../../database/chromium.dat
   OUTPUT
     ALL
     FREE_ION

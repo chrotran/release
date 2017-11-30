@@ -122,7 +122,8 @@ subroutine PMGeneralRead(this,input)
     call StringToUpper(keyword)
     
     found = PETSC_FALSE
-    call PMSubsurfaceFlowReadSelectCase(this,input,keyword,found,option)    
+    call PMSubsurfaceFlowReadSelectCase(this,input,keyword,found, &
+                                        error_string,option)    
     if (found) cycle
     
     select case(trim(keyword))
@@ -330,7 +331,8 @@ end subroutine PMGeneralPostSolve
 ! ************************************************************************** !
 
 subroutine PMGeneralUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
-                                    num_newton_iterations,tfac)
+                                   num_newton_iterations,tfac, &
+                                   time_step_max_growth_factor)
   ! 
   ! Author: Glenn Hammond
   ! Date: 03/14/13
@@ -350,6 +352,7 @@ subroutine PMGeneralUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   PetscInt :: iacceleration
   PetscInt :: num_newton_iterations
   PetscReal :: tfac(:)
+  PetscReal :: time_step_max_growth_factor
   
   PetscReal :: fac
   PetscInt :: ifac
@@ -374,6 +377,7 @@ subroutine PMGeneralUpdateTimestep(this,dt,dt_min,dt_max,iacceleration, &
   endif
   ifac = max(min(num_newton_iterations,size(tfac)),1)
   dtt = fac * dt * (1.d0 + umin)
+  dtt = min(time_step_max_growth_factor*dt,dtt)
   dt = min(dtt,tfac(ifac)*dt,dt_max)
   dt = max(dt,dt_min)
 

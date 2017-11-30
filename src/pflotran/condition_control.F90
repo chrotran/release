@@ -116,6 +116,25 @@ subroutine CondControlAssignFlowInitCond(realization)
 
           if (.not.associated(initial_condition)) exit
 
+          use_dataset = PETSC_FALSE
+          dataset_flag = PETSC_FALSE
+          do idof = 1, option%nflowdof
+            dataset =>  initial_condition%flow_condition% &
+                              sub_condition_ptr(idof)%ptr%dataset
+            select type(dataset_ptr => dataset)
+              class is(dataset_gridded_hdf5_type)
+                ! already mapped to flow_aux_real_var
+              class is(dataset_common_hdf5_type)
+                use_dataset = PETSC_TRUE
+                dataset_flag(idof) = PETSC_TRUE
+                call ConditionControlMapDatasetToVec(realization, &
+                        initial_condition%flow_condition% &
+                          sub_condition_ptr(idof)%ptr%dataset,idof, &
+                        field%flow_xx,GLOBAL)
+              class default
+            end select
+          enddo            
+
           if (.not.associated(initial_condition%flow_aux_real_var)) then
             if (.not.associated(initial_condition%flow_condition)) then
               option%io_buffer = 'Flow condition is NULL in initial condition'
@@ -155,10 +174,14 @@ subroutine CondControlAssignFlowInitCond(realization)
               endif
               ! decrement ibegin to give a local offset of 0
               ibegin = ibegin - 1
-              xx_p(ibegin+WIPPFLO_LIQUID_PRESSURE_DOF) = &
-                general%gas_pressure%dataset%rarray(1)
-              xx_p(ibegin+WIPPFLO_GAS_SATURATION_DOF) = &
-                general%gas_saturation%dataset%rarray(1)
+              if (.not.dataset_flag(WIPPFLO_LIQUID_PRESSURE_DOF)) then
+                xx_p(ibegin+WIPPFLO_LIQUID_PRESSURE_DOF) = &
+                  general%gas_pressure%dataset%rarray(1)
+              endif
+              if (.not.dataset_flag(WIPPFLO_GAS_SATURATION_DOF)) then
+                xx_p(ibegin+WIPPFLO_GAS_SATURATION_DOF) = &
+                  general%gas_saturation%dataset%rarray(1)
+              endif
               iphase_loc_p(ghosted_id) = initial_condition%flow_condition%iphase
               cur_patch%aux%Global%auxvars(ghosted_id)%istate = &
                 initial_condition%flow_condition%iphase
@@ -177,6 +200,7 @@ subroutine CondControlAssignFlowInitCond(realization)
               offset = (local_id-1)*option%nflowdof
               istate = initial_condition%flow_aux_int_var(1,iconn)
               do idof = 1, option%nflowdof
+                if (dataset_flag(idof)) cycle
                 xx_p(offset+idof) = &
                   initial_condition%flow_aux_real_var( &
                     initial_condition%flow_aux_mapping( &
@@ -737,7 +761,9 @@ subroutine CondControlAssignTranInitCond(realization)
   PetscInt :: icell, iconn, idof, isub_condition, temp_int, iimmobile
   PetscInt :: local_id, ghosted_id, iend, ibegin
   PetscInt :: irxn, isite, imnrl, ikinrxn
-  PetscReal, pointer :: xx_p(:), xx_loc_p(:), vec_p(:)
+  PetscReal, pointer :: xx_p(:), xx_loc_p(:), vec_p(:), vec_p2(:)
+  Vec :: vec1_loc
+  Vec :: vec2_loc
   PetscErrorCode :: ierr
   
   type(option_type), pointer :: option
@@ -775,6 +801,8 @@ subroutine CondControlAssignTranInitCond(realization)
   reaction => realization%reaction
   
   iphase = 1
+  vec1_loc = PETSC_NULL_VEC
+  vec2_loc = PETSC_NULL_VEC
   
   cur_patch => realization%patch_list%first
   do
@@ -831,17 +859,22 @@ subroutine CondControlAssignTranInitCond(realization)
                           constraint_coupler%minerals% &
                             constraint_vol_frac_string(imnrl), &
                           string,option)
+            if (vec1_loc == PETSC_NULL_VEC) then
+              ! cannot use field%work_loc as it is used within ConditionCo...
+              call VecDuplicate(field%work_loc,vec1_loc, &
+                                ierr);CHKERRQ(ierr)
+            endif 
             idof = ONE_INTEGER
             call ConditionControlMapDatasetToVec(realization,dataset,idof, &
-                                                  field%work_loc,LOCAL)
-            call VecGetArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+                                                 vec1_loc,LOCAL)
+            call VecGetArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
             do icell=1,initial_condition%region%num_cells
               local_id = initial_condition%region%cell_ids(icell)
               ghosted_id = grid%nL2G(local_id)
               rt_auxvars(ghosted_id)%mnrl_volfrac0(imnrl) = vec_p(ghosted_id)
               rt_auxvars(ghosted_id)%mnrl_volfrac(imnrl) = vec_p(ghosted_id)
             enddo
-            call VecRestoreArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+            call VecRestoreArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
           endif
         enddo
       endif
@@ -856,17 +889,48 @@ subroutine CondControlAssignTranInitCond(realization)
                           constraint_coupler%minerals% &
                           constraint_area_string(imnrl), &
                           string,option)
+            if (vec1_loc == PETSC_NULL_VEC) then
+              ! cannot use field%work_loc as it is used within ConditionCo...
+              call VecDuplicate(field%work_loc,vec1_loc, &
+                                ierr);CHKERRQ(ierr)
+            endif 
             idof = ONE_INTEGER
             call ConditionControlMapDatasetToVec(realization,dataset,idof, &
-                                                  field%work_loc,LOCAL)
-            call VecGetArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+                                                 vec1_loc,LOCAL)
+            call VecScale(vec1_loc,constraint_coupler%minerals% &
+                            constraint_area_conv_factor(imnrl), &
+                          ierr);CHKERRQ(ierr)
+            if (constraint_coupler%minerals%area_per_unit_mass(imnrl)) then
+              if (constraint_coupler%minerals% &
+                    external_vol_frac_dataset(imnrl)) then
+                dataset => DatasetBaseGetPointer(realization%datasets, &
+                              constraint_coupler%minerals% &
+                                constraint_vol_frac_string(imnrl), &
+                              string,option)
+                if (vec2_loc == PETSC_NULL_VEC) then
+                  call VecDuplicate(vec1_loc,vec2_loc, &
+                                    ierr);CHKERRQ(ierr)
+                endif 
+                idof = ONE_INTEGER
+                call ConditionControlMapDatasetToVec(realization,dataset, &
+                                                     idof,vec2_loc,LOCAL)
+                call VecPointwiseMult(vec1_loc,vec1_loc, &
+                                      vec2_loc,ierr);CHKERRQ(ierr)
+              else
+                call VecScale(vec1_loc, &
+                              constraint_coupler%minerals% &
+                                constraint_vol_frac(imnrl), &
+                              ierr);CHKERRQ(ierr)
+              endif
+            endif
+            call VecGetArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
             do icell=1,initial_condition%region%num_cells
               local_id = initial_condition%region%cell_ids(icell)
               ghosted_id = grid%nL2G(local_id)
               rt_auxvars(ghosted_id)%mnrl_area0(imnrl) = vec_p(ghosted_id)
               rt_auxvars(ghosted_id)%mnrl_area(imnrl) = vec_p(ghosted_id)
             enddo
-            call VecRestoreArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+            call VecRestoreArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
           endif
         enddo
       endif
@@ -880,16 +944,21 @@ subroutine CondControlAssignTranInitCond(realization)
             dataset => DatasetBaseGetPointer(realization%datasets, &
                 constraint_coupler%immobile_species%constraint_aux_string(iimmobile), &
                 string,option)
+            if (vec1_loc == PETSC_NULL_VEC) then
+              ! cannot use field%work_loc as it is used within ConditionCo...
+              call VecDuplicate(field%work_loc,vec1_loc, &
+                                ierr);CHKERRQ(ierr)
+            endif 
             idof = ONE_INTEGER
             call ConditionControlMapDatasetToVec(realization,dataset,idof, &
-                                                  field%work_loc,LOCAL)
-            call VecGetArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+                                                 vec1_loc,LOCAL)
+            call VecGetArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
             do icell=1,initial_condition%region%num_cells
               local_id = initial_condition%region%cell_ids(icell)
               ghosted_id = grid%nL2G(local_id)
               rt_auxvars(ghosted_id)%immobile(iimmobile) = vec_p(ghosted_id)
             enddo
-            call VecRestoreArrayF90(field%work_loc,vec_p,ierr);CHKERRQ(ierr)
+            call VecRestoreArrayF90(vec1_loc,vec_p,ierr);CHKERRQ(ierr)
           endif
         enddo
       endif
@@ -1150,6 +1219,13 @@ subroutine CondControlAssignTranInitCond(realization)
     call RTUpdateAuxVars(realization,PETSC_TRUE,PETSC_FALSE,PETSC_TRUE)
   endif
 
+  if (vec1_loc /= PETSC_NULL_VEC) then
+    call VecDestroy(vec1_loc,ierr);CHKERRQ(ierr)
+  endif
+  if (vec2_loc /= PETSC_NULL_VEC) then
+    call VecDestroy(vec2_loc,ierr);CHKERRQ(ierr)
+  endif
+
 end subroutine CondControlAssignTranInitCond
 
 ! ************************************************************************** !
@@ -1190,6 +1266,7 @@ subroutine ConditionControlMapDatasetToVec(realization,dataset,idof, &
   field => realization%field
   option => realization%option
   
+  call VecZeroEntries(field%work,ierr);CHKERRQ(ierr)
   if (associated(dataset)) then
     select type(dataset)
       class is (dataset_common_hdf5_type)
